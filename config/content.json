@@ -1,0 +1,52 @@
+{
+  "site": {
+    "title": "Para a Mulher da Minha Vida",
+    "subtitle": "Cada batida do meu coração lembra o quanto você transforma os meus dias em poesia. Este cantinho é uma forma de eternizar o nosso amor.",
+    "footerMessage": "Com amor, hoje e sempre. 💖"
+  },
+  "theme": {
+    "primaryColor": "#c65686",
+    "secondaryColor": "#7d5fff",
+    "accentColor": "#ff9eb5",
+    "animationStyle": "fade"
+  },
+  "sections": [
+    {
+      "id": "nossa-historia",
+      "type": "text",
+      "title": "Nossa história",
+      "text": "Tudo começou com um encontro simples que virou destino. Entre risos, conversas longas e abraços que curam, construímos uma história que eu quero viver para sempre ao seu lado."
+    },
+    {
+      "id": "fotos-favoritas",
+      "type": "gallery",
+      "title": "Fotos favoritas",
+      "text": "Momentos que guardo com carinho: nossos passeios, nossas viagens e os instantes silenciosos em que só existir ao seu lado já é felicidade."
+    },
+    {
+      "id": "carta-para-voce",
+      "type": "text",
+      "title": "Carta para você",
+      "text": "Meu amor, obrigado por ser meu lar, minha melhor amiga e minha inspiração diária. Prometo continuar te escolhendo em cada amanhecer, com o mesmo brilho nos olhos do primeiro dia."
+    }
+  ],
+  "photos": [
+    {
+      "url": "assets/images/foto-1.svg",
+      "caption": "Nosso sorriso favorito"
+    },
+    {
+      "url": "assets/images/foto-2.svg",
+      "caption": "Um dia inesquecível"
+    },
+    {
+      "url": "assets/images/foto-3.svg",
+      "caption": "Para sempre nós dois"
+    }
+  ],
+  "song": {
+    "title": "Música que amo",
+    "artist": "Nossa trilha sonora especial",
+    "url": "https://www.youtube.com/watch?v=450p7goxZqg"
+  }
+}

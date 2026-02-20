@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <!-- Metadados da página administrativa -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel de Edição Romântico</title>
+
+    <!-- Fonte compartilhada com a página pública -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Estilo dedicado ao painel de edição -->
+    <link rel="stylesheet" href="../css/admin.css" />
+  </head>
+  <body>
+    <main class="admin-shell">
+      <header class="admin-header">
+        <h1>Painel de Edição</h1>
+        <p>Edite conteúdo, tema e ordem das seções sem tocar no código.</p>
+        <div class="admin-actions">
+          <a href="../index.html" class="ghost-btn">Ver página pública</a>
+          <button id="reset-default" class="danger-btn" type="button">Restaurar padrão</button>
+        </div>
+      </header>
+
+      <!-- Formulário principal: toda alteração pode ser salva no localStorage -->
+      <form id="editor-form" class="editor-grid">
+        <section class="panel">
+          <h2>Identidade do site</h2>
+          <label>
+            Título principal
+            <input type="text" id="site-title" />
+          </label>
+          <label>
+            Subtítulo
+            <textarea id="site-subtitle" rows="3"></textarea>
+          </label>
+          <label>
+            Texto do rodapé
+            <input type="text" id="footer-message" />
+          </label>
+        </section>
+
+        <section class="panel">
+          <h2>Tema e animações</h2>
+          <label>Cor principal <input type="color" id="primary-color" /></label>
+          <label>Cor secundária <input type="color" id="secondary-color" /></label>
+          <label>Cor de destaque <input type="color" id="accent-color" /></label>
+          <label>
+            Estilo de animação
+            <select id="animation-style">
+              <option value="fade">Fade suave</option>
+              <option value="slide">Slide elegante</option>
+              <option value="parallax">Parallax romântico</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="panel wide">
+          <h2>Fotos favoritas (carrossel)</h2>
+          <p>Use imagens locais (ex: <code>assets/images/foto.jpg</code>) ou URLs.</p>
+          <div id="photos-list" class="stack-list"></div>
+          <button id="add-photo" class="ghost-btn" type="button">+ Adicionar foto</button>
+        </section>
+
+        <section class="panel wide">
+          <h2>Seções e ordem</h2>
+          <p>Você pode alterar títulos, textos e reorganizar com os botões.</p>
+          <div id="sections-list" class="stack-list"></div>
+        </section>
+
+        <section class="panel wide">
+          <h2>Música que amo</h2>
+          <label>
+            Título da música
+            <input type="text" id="song-title" />
+          </label>
+          <label>
+            Artista / descrição
+            <input type="text" id="song-artist" />
+          </label>
+          <label>
+            Link de áudio (MP3, Spotify embed, YouTube embed)
+            <input type="url" id="song-url" />
+          </label>
+        </section>
+      </form>
+
+      <footer class="admin-footer">
+        <button id="save-content" class="primary-btn" type="button">Salvar alterações</button>
+        <button id="download-json" class="ghost-btn" type="button">Baixar JSON</button>
+      </footer>
+    </main>
+
+    <!-- Script do painel administrativo -->
+    <script src="../js/admin.js" type="module"></script>
+  </body>
+</html>

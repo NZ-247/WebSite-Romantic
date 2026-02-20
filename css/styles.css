@@ -1,0 +1,264 @@
+/*
+  styles.css
+  ---------------------------------------------------------------------
+  Estilos da página pública romântica.
+  Personalização principal de cores via variáveis CSS (custom properties).
+  As variáveis são atualizadas automaticamente pelo JS a partir do conteúdo
+  editável salvo no painel admin.
+*/
+
+:root {
+  --bg-soft: #fff5f8;
+  --bg-strong: #f6e8ff;
+  --primary: #c65686;
+  --secondary: #7d5fff;
+  --accent: #ff9eb5;
+  --text-main: #2f2438;
+  --text-light: #ffffff;
+  --card-bg: rgba(255, 255, 255, 0.84);
+  --shadow: 0 20px 45px rgba(96, 47, 89, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, var(--bg-soft), var(--bg-strong));
+  min-height: 100vh;
+}
+
+.container {
+  width: min(1100px, 92vw);
+  margin: 0 auto;
+}
+
+.romantic-background {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 15% 15%, rgba(255, 158, 181, 0.35), transparent 40%),
+    radial-gradient(circle at 85% 20%, rgba(125, 95, 255, 0.2), transparent 45%),
+    radial-gradient(circle at 50% 85%, rgba(198, 86, 134, 0.22), transparent 50%);
+  filter: blur(3px);
+  z-index: -1;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.45);
+  border-bottom: 1px solid rgba(198, 86, 134, 0.2);
+  z-index: 20;
+}
+
+.navbar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0.9rem 0;
+}
+
+.nav-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid rgba(198, 86, 134, 0.2);
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  transition: transform 220ms ease, background-color 220ms ease;
+}
+
+.nav-link:hover {
+  transform: translateY(-2px);
+  background-color: rgba(198, 86, 134, 0.11);
+}
+
+.hero,
+.section-card,
+.music-card {
+  background: var(--card-bg);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(198, 86, 134, 0.12);
+}
+
+.hero {
+  margin-top: 1.4rem;
+  padding: clamp(1.4rem, 2.4vw, 3rem);
+  text-align: center;
+}
+
+.hero h1 {
+  font-family: 'Playfair Display', serif;
+  color: var(--primary);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  margin-bottom: 0.7rem;
+}
+
+.hero p {
+  margin: 0 auto;
+  max-width: 72ch;
+  line-height: 1.65;
+}
+
+.layout-stack {
+  display: grid;
+  gap: 1.2rem;
+  margin: 1.1rem 0 2.4rem;
+}
+
+.section-card {
+  padding: clamp(1rem, 2vw, 2rem);
+  position: relative;
+  overflow: hidden;
+}
+
+.section-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(125deg, rgba(198, 86, 134, 0.08), transparent 50%, rgba(125, 95, 255, 0.08));
+  pointer-events: none;
+}
+
+.section-card h2 {
+  margin-top: 0;
+  font-family: 'Playfair Display', serif;
+  color: var(--secondary);
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+}
+
+.section-card p {
+  line-height: 1.8;
+}
+
+.gallery {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.gallery img {
+  width: 100%;
+  border-radius: 18px;
+  height: 180px;
+  object-fit: cover;
+  border: 2px solid rgba(198, 86, 134, 0.3);
+}
+
+.carousel {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  min-height: 220px;
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform 450ms ease;
+}
+
+.carousel-item {
+  min-width: 100%;
+  position: relative;
+}
+
+.carousel-item img {
+  width: 100%;
+  height: min(420px, 52vw);
+  object-fit: cover;
+}
+
+.carousel-caption {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--text-light);
+  padding: 0.5rem 0.8rem;
+  border-radius: 12px;
+}
+
+.carousel-controls {
+  margin-top: 0.7rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.carousel-controls button,
+.music-card a {
+  border: none;
+  background: var(--primary);
+  color: var(--text-light);
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.music-card {
+  padding: 1rem 1.2rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0 1.8rem;
+  gap: 1rem;
+}
+
+.admin-link {
+  color: var(--secondary);
+  font-weight: 600;
+}
+
+/* Animações com gatilho de visibilidade */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 700ms ease, transform 700ms ease;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.anim-slide {
+  transform: translateX(-36px);
+}
+
+.anim-slide.is-visible {
+  transform: translateX(0);
+}
+
+.anim-parallax {
+  transform: translateY(50px) scale(0.97);
+}
+
+.anim-parallax.is-visible {
+  transform: translateY(0) scale(1);
+}
+
+@media (max-width: 760px) {
+  .footer {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .carousel-item img {
+    height: 240px;
+  }
+}

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="Foto romântica 2">
+  <defs>
+    <linearGradient id="g2" x1="0" x2="1" y1="1" y2="0">
+      <stop offset="0%" stop-color="#ffc3d9"/>
+      <stop offset="100%" stop-color="#ffd8a8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#g2)"/>
+  <path d="M180 580 Q 600 180 1020 580" stroke="#ffffff88" stroke-width="18" fill="none"/>
+  <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" font-size="64" font-family="Georgia, serif" fill="#8c3b57">Nosso Dia</text>
+</svg>
