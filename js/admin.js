@@ -7,19 +7,46 @@
 
 const CONTENT_PATH = '../config/content.json';
 const STORAGE_KEY = 'romanticSiteContent';
+const DEFAULT_NAVIGATION = {
+  autoRotate: true,
+  intervalMs: 6500,
+  pauseOnHover: true,
+};
 
 /** Carrega dados padrão e mescla com localStorage quando existir. */
 async function getInitialContent() {
   const response = await fetch(CONTENT_PATH);
   const defaults = await response.json();
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) return defaults;
+  if (!stored) return normalizeContent(defaults);
 
   try {
-    return JSON.parse(stored);
+    return normalizeContent(JSON.parse(stored));
   } catch {
-    return defaults;
+    return normalizeContent(defaults);
   }
+}
+
+/** Mantém retrocompatibilidade com JSONs antigos salvos no navegador. */
+function normalizeContent(content) {
+  const fallbackLetter =
+    content.sections?.find((section) => section.id.includes('carta'))?.text ??
+    content.site?.subtitle ??
+    'Você é a melhor parte dos meus dias.';
+
+  return {
+    ...content,
+    navigation: {
+      ...DEFAULT_NAVIGATION,
+      ...(content.navigation ?? {}),
+    },
+    letter: {
+      title: 'Uma carta para você',
+      message: fallbackLetter,
+      signature: content.site?.footerMessage ?? 'Com amor.',
+      ...(content.letter ?? {}),
+    },
+  };
 }
 
 /** Campos base para edição rápida de seções. */
@@ -71,6 +98,12 @@ function fillForm(content) {
   document.getElementById('secondary-color').value = content.theme.secondaryColor;
   document.getElementById('accent-color').value = content.theme.accentColor;
   document.getElementById('animation-style').value = content.theme.animationStyle;
+  document.getElementById('auto-rotate').checked = Boolean(content.navigation.autoRotate);
+  document.getElementById('auto-interval').value = Number(content.navigation.intervalMs) || DEFAULT_NAVIGATION.intervalMs;
+  document.getElementById('pause-on-hover').checked = Boolean(content.navigation.pauseOnHover);
+  document.getElementById('letter-title').value = content.letter.title;
+  document.getElementById('letter-message').value = content.letter.message;
+  document.getElementById('letter-signature').value = content.letter.signature;
 
   document.getElementById('song-title').value = content.song.title;
   document.getElementById('song-artist').value = content.song.artist;
@@ -97,6 +130,15 @@ function collectForm(baseContent) {
   next.theme.secondaryColor = document.getElementById('secondary-color').value;
   next.theme.accentColor = document.getElementById('accent-color').value;
   next.theme.animationStyle = document.getElementById('animation-style').value;
+  next.navigation.autoRotate = document.getElementById('auto-rotate').checked;
+  next.navigation.intervalMs = Math.max(
+    2500,
+    Number(document.getElementById('auto-interval').value) || DEFAULT_NAVIGATION.intervalMs
+  );
+  next.navigation.pauseOnHover = document.getElementById('pause-on-hover').checked;
+  next.letter.title = document.getElementById('letter-title').value.trim();
+  next.letter.message = document.getElementById('letter-message').value.trim();
+  next.letter.signature = document.getElementById('letter-signature').value.trim();
 
   next.song.title = document.getElementById('song-title').value.trim();
   next.song.artist = document.getElementById('song-artist').value.trim();

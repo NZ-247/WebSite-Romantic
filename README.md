@@ -1,6 +1,6 @@
 # 💖 WebSite Romantic — Projeto completo para deploy
 
-Site romântico, responsivo e editável sem alterar código-fonte.
+Site romântico, responsivo e editável sem alterar código-fonte, com experiência interativa em tela cheia.
 
 ## Estrutura de pastas
 
@@ -36,13 +36,14 @@ Acesse:
 ## Como editar conteúdo sem código
 
 1. Entre em `pages/admin.html`.
-2. Altere títulos, textos, fotos, cores, estilo de animação e ordem das seções.
+2. Altere títulos, carta do envelope, fotos, cores, estilo de animação e ordem das seções.
 3. Clique em **Salvar alterações** para refletir na página pública automaticamente (via `localStorage`).
 4. Para levar para produção, clique em **Baixar JSON** e substitua `config/content.json` pelo arquivo exportado.
 
 ## Personalização principal
 
-- **Seções**: editadas no painel admin.
+- **Experiência principal**: envelope com selo, abertura animada, carta em estilo agenda e sequência de fotos em pilha.
+- **Carta**: título, texto e assinatura editáveis no painel admin.
 - **Fotos**: aceitam caminhos locais (`assets/images/minha-foto.jpg`) ou URL.
 - **Tema**: usa CSS custom properties e é controlado no painel.
 - **Animações**: `fade`, `slide`, `parallax`.

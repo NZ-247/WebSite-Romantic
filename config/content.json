@@ -10,6 +10,16 @@
     "accentColor": "#ff9eb5",
     "animationStyle": "fade"
   },
+  "letter": {
+    "title": "Uma carta para você",
+    "message": "Meu amor,\n\nVocê é o meu lugar favorito no mundo.\nEm cada abraço seu, encontro calma.\nEm cada sorriso seu, encontro motivo para sonhar.\n\nSe a vida for uma estrada longa, quero percorrer cada pedaço dela segurando a sua mão.",
+    "signature": "Com amor, hoje e sempre."
+  },
+  "navigation": {
+    "autoRotate": true,
+    "intervalMs": 6500,
+    "pauseOnHover": true
+  },
   "sections": [
     {
       "id": "nossa-historia",

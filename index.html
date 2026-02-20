@@ -1,45 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
-    <!-- Metadados principais para responsividade e SEO básico -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Um site romântico, responsivo e personalizável, dedicado à esposa."
+      content="Uma experiência romântica interativa com envelope, carta e fotos." 
     />
     <title>Para o Amor da Minha Vida</title>
 
-    <!-- Fonte elegante para reforçar o estilo romântico -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500;700&family=Caveat:wght@500;700&display=swap"
       rel="stylesheet"
     />
 
-    <!-- Estilos globais da página pública -->
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body>
-    <!-- Fundo decorativo suave com blur/gradiente -->
-    <div class="romantic-background" aria-hidden="true"></div>
-
-    <!-- Navegação fixa com rolagem suave para seções -->
-    <header class="topbar">
-      <nav class="navbar container" id="main-nav"></nav>
-    </header>
-
-    <!-- Área principal; o conteúdo será montado via JS com base no arquivo config/content.json -->
-    <main id="public-app" class="container"></main>
-
-    <!-- Rodapé simples -->
-    <footer class="footer container">
-      <p id="footer-text">Feito com amor 💖</p>
-      <a class="admin-link" href="pages/admin.html">Editar conteúdo</a>
-    </footer>
-
-    <!-- Script principal da página pública -->
+    <main id="public-app"></main>
     <script src="js/main.js" type="module"></script>
   </body>
 </html>

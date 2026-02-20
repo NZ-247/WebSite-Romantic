@@ -59,10 +59,40 @@
               <option value="parallax">Parallax romântico</option>
             </select>
           </label>
+          <hr />
+          <h3>Navegação entre seções</h3>
+          <label class="inline-toggle">
+            <input type="checkbox" id="auto-rotate" />
+            Ativar navegação automática
+          </label>
+          <label>
+            Intervalo automático (ms)
+            <input type="number" id="auto-interval" min="2500" step="500" />
+          </label>
+          <label class="inline-toggle">
+            <input type="checkbox" id="pause-on-hover" />
+            Pausar ao passar o mouse na barra superior
+          </label>
         </section>
 
         <section class="panel wide">
-          <h2>Fotos favoritas (carrossel)</h2>
+          <h2>Carta do envelope</h2>
+          <label>
+            Título da carta
+            <input type="text" id="letter-title" />
+          </label>
+          <label>
+            Texto da carta
+            <textarea id="letter-message" rows="8"></textarea>
+          </label>
+          <label>
+            Assinatura
+            <input type="text" id="letter-signature" />
+          </label>
+        </section>
+
+        <section class="panel wide">
+          <h2>Fotos favoritas (pilha)</h2>
           <p>Use imagens locais (ex: <code>assets/images/foto.jpg</code>) ou URLs.</p>
           <div id="photos-list" class="stack-list"></div>
           <button id="add-photo" class="ghost-btn" type="button">+ Adicionar foto</button>
