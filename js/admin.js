@@ -46,7 +46,26 @@ function normalizeContent(content) {
       signature: content.site?.footerMessage ?? 'Com amor.',
       ...(content.letter ?? {}),
     },
+    song: {
+      title: 'Nossa música',
+      artist: 'Trilha sonora do nosso amor',
+      url: '',
+      ...(content.song ?? {}),
+    },
+    photos: Array.isArray(content.photos) ? content.photos : [],
   };
+}
+
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+
+  return String(text ?? '').replace(/[&<>"']/g, (char) => map[char]);
 }
 
 /** Campos base para edição rápida de seções. */
@@ -55,10 +74,10 @@ function sectionEditor(section, index) {
     <article class="item" data-section-index="${index}">
       <div class="item-row">
         <label>Título
-          <input type="text" data-field="title" value="${section.title}" />
+          <input type="text" data-field="title" value="${escapeHtml(section.title)}" />
         </label>
         <label>Texto
-          <textarea rows="3" data-field="text">${section.text}</textarea>
+          <textarea rows="3" data-field="text">${escapeHtml(section.text)}</textarea>
         </label>
       </div>
       <div class="item-tools">
@@ -69,16 +88,22 @@ function sectionEditor(section, index) {
   `;
 }
 
-/** Campos de fotos (URL + legenda). */
+/** Campos de fotos (URL + legenda + upload). */
 function photoEditor(photo, index) {
+  const preview = photo.url ? `<img class="photo-preview" src="${photo.url}" alt="Prévia da foto ${index + 1}" />` : '';
+
   return `
     <article class="item" data-photo-index="${index}">
+      ${preview}
       <div class="item-row">
         <label>URL da foto
-          <input type="text" data-field="url" value="${photo.url}" />
+          <input type="text" data-field="url" value="${escapeHtml(photo.url)}" />
         </label>
         <label>Legenda
-          <input type="text" data-field="caption" value="${photo.caption}" />
+          <input type="text" data-field="caption" value="${escapeHtml(photo.caption)}" />
+        </label>
+        <label>Substituir imagem por upload
+          <input type="file" data-action="upload-replace" accept="image/*" />
         </label>
       </div>
       <div class="item-tools">
@@ -86,6 +111,15 @@ function photoEditor(photo, index) {
       </div>
     </article>
   `;
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error('Falha ao ler arquivo.'));
+    reader.readAsDataURL(file);
+  });
 }
 
 /** Preenche o formulário com dados atuais. */
@@ -201,6 +235,41 @@ async function initAdmin() {
     if (action === 'remove-photo') {
       content.photos.splice(index, 1);
       fillForm(content);
+    }
+  });
+
+  document.getElementById('photos-list').addEventListener('change', async (event) => {
+    const action = event.target.dataset.action;
+    if (action !== 'upload-replace') return;
+
+    const card = event.target.closest('[data-photo-index]');
+    const index = Number(card.dataset.photoIndex);
+    const [file] = event.target.files || [];
+    if (!file) return;
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      content.photos[index].url = dataUrl;
+      fillForm(content);
+    } catch {
+      alert('Não foi possível carregar a imagem selecionada.');
+    }
+  });
+
+  document.getElementById('upload-photo').addEventListener('change', async (event) => {
+    const [file] = event.target.files || [];
+    if (!file) return;
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      content.photos.push({
+        url: dataUrl,
+        caption: file.name.replace(/\.[^.]+$/, ''),
+      });
+      fillForm(content);
+      event.target.value = '';
+    } catch {
+      alert('Não foi possível carregar a imagem selecionada.');
     }
   });
 

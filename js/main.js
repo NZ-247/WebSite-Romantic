@@ -9,6 +9,7 @@
 
 const CONTENT_PATH = 'config/content.json';
 const STORAGE_KEY = 'romanticSiteContent';
+let spotifyApiPromise;
 
 /** Carrega conteúdo padrão com sobrescrita opcional do localStorage. */
 async function loadContent() {
@@ -39,6 +40,12 @@ function normalizeContent(content) {
       message: fallbackLetter,
       signature: content.site?.footerMessage ?? 'Com amor, hoje e sempre.',
       ...(content.letter ?? {}),
+    },
+    song: {
+      title: 'Nossa música',
+      artist: 'Toque para ouvir',
+      url: '',
+      ...(content.song ?? {}),
     },
   };
 }
@@ -103,7 +110,7 @@ function renderExperience(content) {
 
       <section class="photos-scene" data-photos-scene>
         <h2>Nossos momentos</h2>
-        <p>Avance e veja cada memória chegando à frente da pilha.</p>
+        <p>Avance para trazer cada memória para a frente da moldura.</p>
 
         <div class="photo-deck" data-photo-deck>
           ${renderPhotoCards(content.photos)}
@@ -114,9 +121,23 @@ function renderExperience(content) {
           <button type="button" data-next-photo>Próxima</button>
           <span data-photo-status>0/${content.photos.length}</span>
         </div>
-
-        <a class="admin-link" href="pages/admin.html">Editar conteúdo</a>
       </section>
+
+      <a class="admin-entry" data-admin-entry href="pages/admin.html">Editar conteúdo</a>
+
+      <div class="music-widget" data-music-widget>
+        <button
+          type="button"
+          class="music-toggle"
+          data-music-toggle
+          aria-pressed="false"
+          aria-label="Ativar música"
+          title="Ativar música"
+        >
+          <span class="music-disc" aria-hidden="true"></span>
+        </button>
+        <div class="music-player" data-music-player hidden></div>
+      </div>
     </section>
   `;
 }
@@ -138,6 +159,156 @@ function createHearts() {
   }
 }
 
+function getSpotifyUri(rawUrl) {
+  if (!rawUrl) return null;
+
+  if (rawUrl.startsWith('spotify:')) return rawUrl;
+
+  const match = rawUrl.match(/open\.spotify\.com\/(track|album|playlist|episode|show)\/([A-Za-z0-9]+)/i);
+  if (!match) return null;
+
+  return `spotify:${match[1].toLowerCase()}:${match[2]}`;
+}
+
+function isDirectAudioUrl(url) {
+  return /\.(mp3|ogg|wav|m4a)(\?|#|$)/i.test(url);
+}
+
+function loadSpotifyIframeApi() {
+  if (window.SpotifyIframeApi) {
+    return Promise.resolve(window.SpotifyIframeApi);
+  }
+
+  if (spotifyApiPromise) return spotifyApiPromise;
+
+  spotifyApiPromise = new Promise((resolve, reject) => {
+    const timeoutId = window.setTimeout(() => reject(new Error('Spotify API timeout')), 10000);
+    const previousHandler = window.onSpotifyIframeApiReady;
+
+    window.onSpotifyIframeApiReady = (api) => {
+      if (typeof previousHandler === 'function') {
+        previousHandler(api);
+      }
+      window.clearTimeout(timeoutId);
+      resolve(api);
+    };
+
+    const script = document.createElement('script');
+    script.src = 'https://open.spotify.com/embed/iframe-api/v1';
+    script.async = true;
+    script.onerror = () => {
+      window.clearTimeout(timeoutId);
+      reject(new Error('Spotify API load failed'));
+    };
+    document.head.appendChild(script);
+  });
+
+  return spotifyApiPromise;
+}
+
+function setupMusic(content) {
+  const widget = document.querySelector('[data-music-widget]');
+  const toggle = document.querySelector('[data-music-toggle]');
+  const host = document.querySelector('[data-music-player]');
+
+  if (!widget || !toggle || !host) return;
+
+  const songUrl = (content.song?.url ?? '').trim();
+  if (!songUrl) {
+    widget.style.display = 'none';
+    return;
+  }
+
+  let isPlaying = false;
+  let audio;
+  let spotifyController;
+  let spotifyMount;
+  const spotifyUri = getSpotifyUri(songUrl);
+
+  if (!spotifyUri && !isDirectAudioUrl(songUrl)) {
+    widget.style.display = 'none';
+    return;
+  }
+
+  const updateButton = () => {
+    toggle.setAttribute('aria-pressed', String(isPlaying));
+    toggle.setAttribute('aria-label', isPlaying ? 'Pausar música' : 'Ativar música');
+    toggle.setAttribute('title', isPlaying ? 'Pausar música' : 'Ativar música');
+    toggle.classList.toggle('is-playing', isPlaying);
+    host.hidden = !isPlaying;
+    host.classList.toggle('is-visible', isPlaying);
+  };
+
+  const play = async () => {
+    if (spotifyUri) {
+      try {
+        if (!spotifyController) {
+          const api = await loadSpotifyIframeApi();
+          spotifyMount = document.createElement('div');
+          host.replaceChildren(spotifyMount);
+          await new Promise((resolve) => {
+            api.createController(
+              spotifyMount,
+              {
+                uri: spotifyUri,
+                width: '300',
+                height: '80',
+              },
+              (controller) => {
+                spotifyController = controller;
+                resolve();
+              }
+            );
+          });
+        }
+
+        spotifyController.play();
+        isPlaying = true;
+        updateButton();
+      } catch {
+        isPlaying = false;
+        updateButton();
+      }
+      return;
+    }
+
+    if (!audio) {
+      audio = new Audio(songUrl);
+      audio.loop = true;
+      audio.addEventListener('ended', () => {
+        isPlaying = false;
+        updateButton();
+      });
+    }
+
+    try {
+      await audio.play();
+      isPlaying = true;
+      updateButton();
+    } catch {
+      isPlaying = false;
+      updateButton();
+    }
+  };
+
+  const pause = () => {
+    if (spotifyController) spotifyController.pause();
+    if (audio) audio.pause();
+    isPlaying = false;
+    updateButton();
+  };
+
+  toggle.addEventListener('click', async () => {
+    if (isPlaying) {
+      pause();
+      return;
+    }
+    await play();
+  });
+
+  updateButton();
+}
+
 /** Controla estados do envelope, carta e galeria de fotos. */
 function setupExperience(content) {
   const envelopeScene = document.querySelector('[data-envelope-scene]');
@@ -146,6 +317,7 @@ function setupExperience(content) {
   const openButton = document.querySelector('[data-open-envelope]');
   const showPhotosButton = document.querySelector('[data-show-photos]');
   const photosScene = document.querySelector('[data-photos-scene]');
+  const adminEntry = document.querySelector('[data-admin-entry]');
 
   const cards = [...document.querySelectorAll('[data-photo-index]')];
   const prevButton = document.querySelector('[data-prev-photo]');
@@ -154,6 +326,7 @@ function setupExperience(content) {
 
   let isEnvelopeOpen = false;
   let revealedCount = 0;
+  let hasSeenAllPhotos = false;
 
   const refreshDeck = () => {
     if (!cards.length) {
@@ -172,10 +345,10 @@ function setupExperience(content) {
       card.setAttribute('aria-hidden', String(!isVisible));
 
       if (isVisible) {
-        const x = ((index % 3) - 1) * 16;
-        const y = index * 3;
+        const x = ((index % 3) - 1) * 18;
+        const y = index * 4;
         const rotation = (index % 2 === 0 ? -1 : 1) * (2 + (index % 4));
-        card.style.zIndex = String(index + 2);
+        card.style.zIndex = String(index + 3);
         card.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) rotate(${rotation}deg)`;
       }
     });
@@ -184,6 +357,12 @@ function setupExperience(content) {
 
     prevButton.disabled = revealedCount <= 1;
     nextButton.textContent = revealedCount >= cards.length ? 'Recomeçar' : 'Próxima';
+
+    if (revealedCount >= cards.length) {
+      hasSeenAllPhotos = true;
+    }
+
+    adminEntry?.classList.toggle('is-visible', hasSeenAllPhotos);
   };
 
   openButton?.addEventListener('click', () => {
@@ -192,12 +371,19 @@ function setupExperience(content) {
     envelope.classList.add('is-opening');
     window.setTimeout(() => {
       letter.classList.add('is-visible');
-    }, 520);
+    }, 440);
   });
 
   showPhotosButton?.addEventListener('click', () => {
-    envelopeScene.classList.add('is-faded');
+    if (!isEnvelopeOpen) {
+      isEnvelopeOpen = true;
+      envelope.classList.add('is-opening');
+      letter.classList.add('is-visible');
+    }
+
+    envelopeScene.classList.add('is-background');
     photosScene.classList.add('is-visible');
+
     if (cards.length > 0 && revealedCount === 0) {
       revealedCount = 1;
       refreshDeck();
@@ -231,6 +417,7 @@ async function init() {
   renderExperience(content);
   createHearts();
   setupExperience(content);
+  setupMusic(content);
 }
 
 init();

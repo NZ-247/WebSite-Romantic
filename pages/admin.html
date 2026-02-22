@@ -93,7 +93,11 @@
 
         <section class="panel wide">
           <h2>Fotos favoritas (pilha)</h2>
-          <p>Use imagens locais (ex: <code>assets/images/foto.jpg</code>) ou URLs.</p>
+          <p>Use caminhos locais, URLs ou envie imagens do seu dispositivo.</p>
+          <label class="upload-inline">
+            <span>Adicionar foto por upload</span>
+            <input id="upload-photo" type="file" accept="image/*" />
+          </label>
           <div id="photos-list" class="stack-list"></div>
           <button id="add-photo" class="ghost-btn" type="button">+ Adicionar foto</button>
         </section>
@@ -115,9 +119,10 @@
             <input type="text" id="song-artist" />
           </label>
           <label>
-            Link de áudio (MP3, Spotify embed, YouTube embed)
+            Link de áudio (Spotify, MP3 ou outro link de streaming)
             <input type="url" id="song-url" />
           </label>
+          <p>Para Spotify, cole o link da faixa/playlist (ex: <code>https://open.spotify.com/track/...</code>).</p>
         </section>
       </form>
 

@@ -79,6 +79,18 @@ label {
   font-weight: 600;
 }
 
+.upload-inline {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.8rem;
+}
+
+.upload-inline input {
+  padding: 0.55rem;
+  border: 1px dashed var(--line);
+  background: #fff;
+}
+
 .inline-toggle {
   display: flex;
   align-items: center;
@@ -109,6 +121,15 @@ select {
   border-radius: 14px;
   padding: 0.7rem;
   background: #fff;
+}
+
+.photo-preview {
+  width: min(300px, 100%);
+  height: 160px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 0.55rem;
+  border: 1px solid rgba(198, 86, 134, 0.24);
 }
 
 .item-row {
