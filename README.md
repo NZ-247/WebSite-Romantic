@@ -1,108 +1,124 @@
-# 💖 WebSite Romantic — Projeto completo para deploy
+# WebSite Romantic
 
-Site romântico, responsivo e editável sem alterar código-fonte, com experiência interativa em tela cheia.
+Site romântico com página pública em HTML, CSS e JavaScript puro, agora servido por um backend leve em Node.js + Express para administrar conteúdo, fotos e música com autenticação por token.
 
-## Estrutura de pastas
+## Estrutura principal
 
 ```txt
 .
 ├── assets/
-│   └── images/                # Imagens do site (exemplos em SVG)
-├── config/
-│   └── content.json           # Conteúdo padrão editável
+│   ├── favicon-heart.svg
+│   └── images/
 ├── css/
-│   ├── styles.css             # Estilo da página pública
-│   └── admin.css              # Estilo da página de edição
+│   ├── admin.css
+│   └── styles.css
 ├── js/
-│   ├── main.js                # Renderização da página pública
-│   └── admin.js               # Painel de edição
+│   ├── admin.js
+│   ├── login.js
+│   └── main.js
 ├── pages/
-│   └── admin.html             # Interface de administração
-└── index.html                 # Página principal pública
+│   ├── admin.html
+│   └── login.html
+├── server/
+│   ├── data/content.json
+│   ├── uploads/images/
+│   ├── uploads/music/
+│   └── index.js
+├── .env.example
+└── package.json
 ```
 
-## Como executar localmente
-
-Como o projeto usa `fetch` para carregar `config/content.json`, abra via servidor HTTP:
+## Instalar dependências
 
 ```bash
-python3 -m http.server 8080
+npm install
+```
+
+## Configurar `.env`
+
+Crie o arquivo local a partir do exemplo:
+
+```bash
+cp .env.example .env
+```
+
+Edite os valores:
+
+```env
+PORT=3000
+NODE_ENV=development
+ADMIN_TOKEN=troque-este-token
+SESSION_SECRET=troque-por-um-segredo-longo-e-aleatorio
+MAX_IMAGE_SIZE_MB=5
+MAX_MUSIC_SIZE_MB=15
+```
+
+`ADMIN_TOKEN` é o token digitado na tela de login. Ele fica somente no servidor e não deve ser commitado.
+
+## Executar localmente
+
+```bash
+npm run dev
 ```
 
 Acesse:
-- Página pública: `http://localhost:8080/index.html`
-- Página admin: `http://localhost:8080/pages/admin.html`
 
-## Como editar conteúdo sem código
+- Página pública: `http://localhost:3000/`
+- Admin: `http://localhost:3000/pages/admin.html`
 
-1. Entre em `pages/admin.html`.
-2. Altere títulos, carta do envelope, fotos, cores, estilo de animação e ordem das seções.
-3. Clique em **Salvar alterações** para refletir na página pública automaticamente (via `localStorage`).
-4. Para levar para produção, clique em **Baixar JSON** e substitua `config/content.json` pelo arquivo exportado.
-
-## Personalização principal
-
-- **Experiência principal**: envelope com selo, abertura animada, carta em estilo agenda e sequência de fotos em pilha.
-- **Carta**: título, texto e assinatura editáveis no painel admin.
-- **Fotos**: aceitam caminhos locais (`assets/images/minha-foto.jpg`) ou URL.
-- **Tema**: usa CSS custom properties e é controlado no painel.
-- **Animações**: `fade`, `slide`, `parallax`.
-
-## Deploy em Nginx
-
-Exemplo de bloco de servidor:
-
-```nginx
-server {
-    listen 80;
-    server_name seu-dominio.com;
-
-    root /var/www/website-romantic;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ =404;
-    }
-
-    # Cache opcional de assets
-    location ~* \.(css|js|png|jpg|jpeg|gif|svg|webp)$ {
-        expires 7d;
-        add_header Cache-Control "public, immutable";
-    }
-}
-```
-
-Depois:
+Para executar sem modo watch:
 
 ```bash
-sudo nginx -t
-sudo systemctl reload nginx
+npm start
 ```
 
-## Observações
+## Acessar o admin
 
-- O painel admin é **simples** e pensado para edição pessoal.
-- Para uso multiusuário com autenticação real, recomenda-se backend (Node, PHP, etc.).
+1. Abra `/pages/admin.html`.
+2. O servidor redireciona para `/pages/login.html` se não houver sessão.
+3. Digite o valor de `ADMIN_TOKEN`.
+4. Após validar, o navegador recebe um cookie de sessão `httpOnly`.
+5. Use **Sair** no painel para encerrar a sessão.
 
-## Como salvar esses arquivos no GitHub
+## Conteúdo e endpoints
 
-No terminal, dentro da pasta do projeto, execute:
+- Conteúdo editável: `server/data/content.json`
+- Endpoint público: `GET /api/content`
+- Endpoint protegido de leitura: `GET /api/admin/content`
+- Endpoint protegido de gravação: `PUT /api/admin/content`
+- Upload de imagens: `POST /api/admin/uploads/images`
+- Upload de música: `POST /api/admin/uploads/music`
+
+## Upload de fotos e música
+
+No painel admin:
+
+1. Faça login.
+2. Em **Fotos favoritas**, envie uma imagem ou substitua uma foto existente.
+3. Em **Música que amo**, envie um MP3 ou cole um link do Spotify/MP3.
+4. Clique em **Salvar alterações** para publicar no conteúdo público.
+
+Imagens aceitas: `jpg`, `jpeg`, `png`, `webp`, `svg`.
+
+Áudio aceito: `mp3`.
+
+Os arquivos enviados ficam em:
+
+- `server/uploads/images`
+- `server/uploads/music`
+
+Essas pastas são ignoradas pelo Git, mantendo apenas os `.gitkeep`.
+
+## Docker futuramente
+
+Quando um `Dockerfile` for adicionado, use volumes para preservar conteúdo e uploads:
 
 ```bash
-git init
-git add .
-git commit -m "Site romântico completo"
-git branch -M main
-git remote add origin https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git
-git push -u origin main
+docker build -t website-romantic .
+docker run --env-file .env -p 3000:3000 \
+  -v "$(pwd)/server/data:/app/server/data" \
+  -v "$(pwd)/server/uploads:/app/server/uploads" \
+  website-romantic
 ```
 
-Se o repositório já existir localmente (como neste projeto), normalmente basta:
-
-```bash
-git add .
-git commit -m "Atualiza conteúdo do site romântico"
-git push
-```
-
-> Dica: no GitHub, gere um **Personal Access Token** para autenticação via HTTPS caso a senha da conta não funcione no `git push`.
+Em produção, defina `NODE_ENV=production`, use HTTPS e mantenha `SESSION_SECRET` longo e aleatório.

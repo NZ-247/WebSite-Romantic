@@ -1,196 +1,72 @@
-# Relatorio de dependencias
+# Dependencias e pontos de integracao
 
-Data da analise: 2026-06-11
+## Runtime Node.js
 
-## Sumario executivo
+As dependencias ficam em `package.json`:
 
-O projeto nao usa gerenciador de pacotes. Nao existe `package.json`, lockfile ou diretorio `node_modules` no repositorio analisado. Portanto, nao ha dependencias npm para atualizar, deduplicar ou auditar via `npm audit`.
+| Pacote | Uso |
+| --- | --- |
+| `express` | Servidor HTTP, paginas estaticas controladas e rotas de API. |
+| `dotenv` | Carrega variaveis de ambiente do `.env`. |
+| `express-session` | Cria sessao segura via cookie `httpOnly` para o admin. |
+| `multer` | Processa uploads multipart de imagens e MP3. |
+| `sanitize-html` | Sanitiza SVG enviado antes de salvar em uploads. |
 
-As dependencias reais do projeto sao:
+## Variaveis de ambiente
 
-- Recursos estaticos locais.
-- APIs nativas do navegador.
-- Google Fonts via CDN.
-- Spotify IFrame API opcional via CDN.
-
-## Inventario de dependencias
-
-### Dependencias locais
-
-| Dependencia | Onde aparece | Uso |
+| Variavel | Obrigatoria | Descricao |
 | --- | --- | --- |
-| `config/content.json` | `js/main.js`, `js/admin.js` | Conteudo padrao do site e admin. |
-| `css/styles.css` | `index.html` | Estilo da pagina publica. |
-| `css/admin.css` | `pages/admin.html` | Estilo do painel administrativo. |
-| `js/main.js` | `index.html` | Runtime da pagina publica. |
-| `js/admin.js` | `pages/admin.html` | Runtime do painel administrativo. |
-| `assets/images/foto-1.svg` | `config/content.json` | Foto padrao publica. |
-| `assets/images/foto-2.svg` | `config/content.json` | Foto padrao publica. |
-| `assets/images/foto-3.svg` | `config/content.json` | Foto padrao publica. |
-| `assets/images/foto-extra.svg` | `js/admin.js` | Foto padrao ao adicionar nova foto pelo admin. |
+| `PORT` | Nao | Porta do servidor. Padrao: `3000`. |
+| `NODE_ENV` | Nao | Use `production` em producao para cookie seguro. |
+| `ADMIN_TOKEN` | Sim | Token digitado no login do admin. |
+| `SESSION_SECRET` | Recomendado | Segredo usado para assinar a sessao. |
+| `MAX_IMAGE_SIZE_MB` | Nao | Tamanho maximo de imagem. Padrao: `5`. |
+| `MAX_MUSIC_SIZE_MB` | Nao | Tamanho maximo de MP3. Padrao: `15`. |
 
-### Dependencias externas
+## Arquivos principais
 
-| Dependencia | Origem | Onde aparece | Observacao |
+| Arquivo | Responsabilidade |
+| --- | --- |
+| `server/index.js` | Backend Express, autenticacao, APIs, uploads e servico de assets. |
+| `server/data/content.json` | Conteudo editavel usado pela pagina publica e pelo admin. |
+| `index.html` | Entrada publica do site romantico. |
+| `pages/login.html` | Tela de login do admin. |
+| `pages/admin.html` | Painel protegido de edicao. |
+| `js/main.js` | Renderiza a experiencia publica a partir de `/api/content`. |
+| `js/login.js` | Envia o token para `/api/admin/login`. |
+| `js/admin.js` | Le/salva conteudo e envia uploads pelas rotas protegidas. |
+| `css/styles.css` | Visual publico, animacoes e suporte a `prefers-reduced-motion`. |
+| `css/admin.css` | Visual do login e painel admin. |
+| `assets/favicon-heart.svg` | Favicon de coracao vermelho. |
+
+## Endpoints
+
+| Metodo | Rota | Protegido | Uso |
 | --- | --- | --- | --- |
-| Google Fonts CSS API | `fonts.googleapis.com` | `index.html`, `pages/admin.html` | Carrega `Playfair Display`, `Inter` e, na pagina publica, `Caveat`. |
-| Google Fonts assets | `fonts.gstatic.com` | `index.html`, `pages/admin.html` | Entrega arquivos de fonte. |
-| Spotify IFrame API | `open.spotify.com/embed/iframe-api/v1` | `js/main.js` | Carregada dinamicamente apenas para URLs Spotify. |
+| `GET` | `/api/content` | Nao | Conteudo publico. |
+| `POST` | `/api/admin/login` | Nao | Valida `ADMIN_TOKEN` e cria sessao. |
+| `POST` | `/api/admin/logout` | Sim | Encerra a sessao. |
+| `GET` | `/api/admin/session` | Nao | Informa se ha sessao ativa. |
+| `GET` | `/api/admin/content` | Sim | Le conteudo atual. |
+| `PUT` | `/api/admin/content` | Sim | Salva alteracoes em `server/data/content.json`. |
+| `POST` | `/api/admin/uploads/images` | Sim | Upload de `jpg`, `jpeg`, `png`, `webp`, `svg`. |
+| `POST` | `/api/admin/uploads/music` | Sim | Upload de `mp3`. |
 
-### APIs nativas do navegador
+## Persistencia local
 
-| API | Onde aparece | Uso |
-| --- | --- | --- |
-| `fetch` | `js/main.js`, `js/admin.js` | Carregar `content.json`. |
-| `localStorage` | `js/main.js`, `js/admin.js` | Persistir conteudo editado no navegador. |
-| DOM APIs | `js/main.js`, `js/admin.js` | Renderizacao e eventos. |
-| `FileReader` | `js/admin.js` | Converter uploads de imagem em Data URL. |
-| `structuredClone` | `js/admin.js` | Clonar o objeto de conteudo antes de coletar dados do formulario. |
-| `Blob` | `js/admin.js` | Gerar arquivo JSON para download. |
-| `URL.createObjectURL` | `js/admin.js` | Criar URL temporaria para baixar JSON. |
-| `Audio` | `js/main.js` | Tocar arquivos diretos de audio. |
+Uploads sao salvos em:
 
-## Verificacao de dependencias npm
+- `server/uploads/images`
+- `server/uploads/music`
 
-Resultado dos comandos:
+Esses diretorios sao ignorados pelo Git, exceto pelos arquivos `.gitkeep`.
 
-```bash
-npm ls --depth=0
-```
+## Seguranca aplicada
 
-Retorno:
-
-```txt
-/home/nz/Sites/WebSite-Romantic
-└── (empty)
-```
-
-```bash
-npm audit --audit-level=low
-```
-
-Retorno relevante:
-
-```txt
-npm error code ENOLOCK
-npm error audit This command requires an existing lockfile.
-```
-
-```bash
-npm outdated --long
-```
-
-Retorno:
-
-```txt
-Sem saida relevante, pois nao ha manifesto de pacotes.
-```
-
-Conclusao: nao ha base para auditoria npm enquanto o projeto continuar sem `package.json` e lockfile.
-
-Referencia externa consultada: a documentacao do npm informa que `npm audit` usa as dependencias configuradas no projeto e requer `package.json`/lockfile para auditar vulnerabilidades conhecidas.
-
-## Dependencias desatualizadas
-
-### npm
-
-Nao aplicavel. O projeto nao declara dependencias npm.
-
-### CDNs e APIs externas
-
-- Google Fonts e carregado por URL de CSS API, sem versao fixa.
-- Spotify IFrame API e carregada por endpoint `v1`.
-
-Nao foi identificada uma versao local desatualizada porque essas dependencias nao sao fixadas no repositorio. O risco real e o oposto: por nao estarem pinadas, mudancas externas podem afetar comportamento, privacidade, disponibilidade ou performance sem alteracao no codigo local.
-
-## Dependencias vulneraveis
-
-### npm
-
-Nao auditavel via `npm audit` por ausencia de lockfile.
-
-### Runtime externo
-
-Nao ha um lockfile ou hash local para validar Google Fonts ou Spotify IFrame API. Pontos de atencao:
-
-- Dependencias externas por CDN aumentam superficie de privacidade e disponibilidade.
-- Nao ha Content Security Policy documentada para restringir `script-src`, `style-src`, `font-src`, `img-src`, `media-src` e `frame-src`.
-- A Spotify IFrame API e carregada dinamicamente sem Subresource Integrity. Em scripts dinamicos de terceiros, SRI normalmente exige gestao cuidadosa de versao/arquivo, o que nao esta presente.
-
-## Dependencias nao utilizadas
-
-### Pacotes
-
-Nao ha pacotes instalados.
-
-### Assets locais sem referencia atual
-
-Os arquivos abaixo nao sao referenciados por HTML, JS, CSS ou `config/content.json`:
-
-- `assets/images/img-ia.jpeg`
-- `assets/images/img-kiss.jpeg`
-- `assets/images/img-leydy.jpeg`
-- `assets/images/img-love.jpeg`
-
-Tamanho aproximado total desses JPEGs: 568 KB.
-
-### Configuracoes editaveis parcialmente nao usadas
-
-Os campos abaixo existem em `config/content.json` e/ou no admin, mas nao sao aplicados integralmente no runtime publico:
-
-- `theme.primaryColor`
-- `theme.secondaryColor`
-- `theme.accentColor`
-- `theme.animationStyle`
-- `navigation.autoRotate`
-- `navigation.intervalMs`
-- `navigation.pauseOnHover`
-- `sections`
-- `site.footerMessage`
-- `song.title`
-- `song.artist`
-
-Isso nao e uma dependencia de pacote, mas e dependencia de dados nao consumida pela UI publica.
-
-## Dependencias duplicadas
-
-Nao ha dependencias npm duplicadas.
-
-Duplicacoes internas relevantes:
-
-- `escapeHtml()` existe em `js/main.js` e `js/admin.js`.
-- Logica de carregar JSON, ler `localStorage` e normalizar conteudo existe nos dois scripts.
-- Requisicoes de Google Fonts aparecem em `index.html` e `pages/admin.html`, com familias parcialmente diferentes.
-
-Essas duplicacoes sao pequenas, mas podem causar divergencia se o modelo de conteudo evoluir.
-
-## Alternativas mais modernas ou robustas
-
-Sugestoes sem alteracao automatica:
-
-- Criar uma etapa opcional de build com Vite, Parcel ou outro bundler somente se o projeto crescer, para validar imports, minificar assets e gerar hashes de cache.
-- Self-host de fontes para reduzir dependencia de terceiros, melhorar privacidade e permitir cache/pinning mais previsivel.
-- Consolidar funcoes compartilhadas (`escapeHtml`, `normalizeContent`, leitura do conteudo) em um modulo comum se o projeto passar a ter build/bundler ou imports relativos compartilhados.
-- Trocar renderizacao por `innerHTML` para construcao via DOM APIs ou template sanitizado quando houver campos editaveis que entram em atributos.
-- Adicionar CSP no servidor de producao.
-- Se o painel virar administracao real, substituir `localStorage` por backend autenticado e autorizacao server-side.
-
-## Matriz de risco de dependencias
-
-| Item | Severidade | Motivo |
-| --- | --- | --- |
-| Ausencia de lockfile para auditoria | Baixo | Nao ha pacotes npm, mas tambem nao ha trilha formal de auditoria. |
-| CDNs externos sem pinning | Medio | Mudancas externas podem afetar disponibilidade, privacidade e comportamento. |
-| Spotify script dinamico | Medio | Terceiro executa codigo no contexto da pagina via script remoto. |
-| Google Fonts externo | Baixo | Risco principal e privacidade/performance, nao execucao de JS. |
-| Assets JPEG nao usados | Baixo | Aumentam peso do deploy se publicados. |
-| Configuracoes nao consumidas | Medio | Admin promete controles que nao refletem na pagina publica. |
-
-## Conclusao
-
-O projeto nao tem dependencia de pacote vulneravel ou desatualizada detectavel localmente, porque nao usa pacote algum. A maior atencao deve ir para:
-
-- Dependencias externas por CDN.
-- Falta de CSP.
-- Dados editaveis inseridos em HTML.
-- Assets e configuracoes que existem, mas nao participam do fluxo publico.
+- O token nao fica hardcoded no frontend.
+- A sessao usa cookie `httpOnly` e `sameSite=lax`.
+- `/pages/admin.html` e as rotas admin sao protegidas por middleware.
+- Uploads validam extensao, MIME, assinatura basica e tamanho maximo.
+- Nomes de arquivos sao gerados com `crypto.randomUUID()`.
+- URLs de fotos e musica sao filtradas no backend e no frontend.
+- SVG enviado passa por sanitizacao e headers defensivos ao ser servido.

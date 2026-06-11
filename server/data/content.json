@@ -5,9 +5,9 @@
     "footerMessage": "Com amor, hoje e sempre. 💖"
   },
   "theme": {
-    "primaryColor": "#c65686",
-    "secondaryColor": "#7d5fff",
-    "accentColor": "#ff9eb5",
+    "primaryColor": "#d91663",
+    "secondaryColor": "#6c4cf6",
+    "accentColor": "#ffb000",
     "animationStyle": "fade"
   },
   "letter": {
@@ -52,11 +52,15 @@
     {
       "url": "assets/images/foto-3.svg",
       "caption": "Para sempre nós dois"
+    },
+    {
+      "url": "/uploads/images/image-1781213326012-31267c02-5afd-450a-95a4-1e2ef3bdf8eb.jpg",
+      "caption": "Novo momento especial"
     }
   ],
   "song": {
     "title": "Música que amo",
     "artist": "Nossa trilha sonora especial",
-    "url": "https://www.youtube.com/watch?v=450p7goxZqg"
+    "url": ""
   }
 }

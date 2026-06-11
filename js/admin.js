@@ -1,41 +1,71 @@
 /**
  * admin.js
  * ------------------------------------------------------------------
- * Painel administrativo simples para editar conteúdo do site romântico.
- * Persistência no localStorage e opção de exportar JSON para deploy.
+ * Painel administrativo autenticado com persistencia no backend.
  */
 
-const CONTENT_PATH = '../config/content.json';
-const STORAGE_KEY = 'romanticSiteContent';
+const ADMIN_CONTENT_ENDPOINT = '/api/admin/content';
+const IMAGE_UPLOAD_ENDPOINT = '/api/admin/uploads/images';
+const MUSIC_UPLOAD_ENDPOINT = '/api/admin/uploads/music';
 const DEFAULT_NAVIGATION = {
   autoRotate: true,
   intervalMs: 6500,
   pauseOnHover: true,
 };
 
-/** Carrega dados padrão e mescla com localStorage quando existir. */
-async function getInitialContent() {
-  const response = await fetch(CONTENT_PATH);
-  const defaults = await response.json();
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) return normalizeContent(defaults);
+let messageTimer;
 
-  try {
-    return normalizeContent(JSON.parse(stored));
-  } catch {
-    return normalizeContent(defaults);
+async function apiFetch(url, options = {}) {
+  const headers = {
+    Accept: 'application/json',
+    ...(options.headers ?? {}),
+  };
+
+  const response = await fetch(url, {
+    credentials: 'same-origin',
+    ...options,
+    headers,
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (response.status === 401) {
+    window.location.assign(`/pages/login.html?next=${encodeURIComponent('/pages/admin.html')}`);
+    throw new Error('Sessao expirada.');
   }
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Nao foi possivel concluir a operacao.');
+  }
+
+  return data;
 }
 
-/** Mantém retrocompatibilidade com JSONs antigos salvos no navegador. */
+async function getInitialContent() {
+  return normalizeContent(await apiFetch(ADMIN_CONTENT_ENDPOINT));
+}
+
 function normalizeContent(content) {
   const fallbackLetter =
-    content.sections?.find((section) => section.id.includes('carta'))?.text ??
+    content.sections?.find((section) => String(section.id || '').includes('carta'))?.text ??
     content.site?.subtitle ??
     'Você é a melhor parte dos meus dias.';
 
   return {
     ...content,
+    site: {
+      title: 'Para o Amor da Minha Vida',
+      subtitle: '',
+      footerMessage: 'Com amor.',
+      ...(content.site ?? {}),
+    },
+    theme: {
+      primaryColor: '#d91663',
+      secondaryColor: '#6c4cf6',
+      accentColor: '#ffb000',
+      animationStyle: 'fade',
+      ...(content.theme ?? {}),
+    },
     navigation: {
       ...DEFAULT_NAVIGATION,
       ...(content.navigation ?? {}),
@@ -52,6 +82,7 @@ function normalizeContent(content) {
       url: '',
       ...(content.song ?? {}),
     },
+    sections: Array.isArray(content.sections) ? content.sections : [],
     photos: Array.isArray(content.photos) ? content.photos : [],
   };
 }
@@ -68,7 +99,30 @@ function escapeHtml(text) {
   return String(text ?? '').replace(/[&<>"']/g, (char) => map[char]);
 }
 
-/** Campos base para edição rápida de seções. */
+function sanitizeImageUrl(rawUrl) {
+  const value = String(rawUrl ?? '').trim();
+
+  if (!value || value.startsWith('//') || /["'<>]/.test(value)) {
+    return '';
+  }
+
+  try {
+    const parsed = new URL(value, window.location.origin);
+
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return '';
+    }
+
+    if (!/\.(jpe?g|png|webp|svg)$/i.test(parsed.pathname)) {
+      return '';
+    }
+
+    return parsed.href;
+  } catch {
+    return '';
+  }
+}
+
 function sectionEditor(section, index) {
   return `
     <article class="item" data-section-index="${index}">
@@ -81,16 +135,18 @@ function sectionEditor(section, index) {
         </label>
       </div>
       <div class="item-tools">
-        <button type="button" data-action="up">↑ Subir</button>
-        <button type="button" data-action="down">↓ Descer</button>
+        <button type="button" data-action="up">Subir</button>
+        <button type="button" data-action="down">Descer</button>
       </div>
     </article>
   `;
 }
 
-/** Campos de fotos (URL + legenda + upload). */
 function photoEditor(photo, index) {
-  const preview = photo.url ? `<img class="photo-preview" src="${photo.url}" alt="Prévia da foto ${index + 1}" />` : '';
+  const previewUrl = sanitizeImageUrl(photo.url);
+  const preview = previewUrl
+    ? `<img class="photo-preview" src="${escapeHtml(previewUrl)}" alt="Prévia da foto ${index + 1}" />`
+    : '';
 
   return `
     <article class="item" data-photo-index="${index}">
@@ -103,7 +159,7 @@ function photoEditor(photo, index) {
           <input type="text" data-field="caption" value="${escapeHtml(photo.caption)}" />
         </label>
         <label>Substituir imagem por upload
-          <input type="file" data-action="upload-replace" accept="image/*" />
+          <input type="file" data-action="upload-replace" accept=".jpg,.jpeg,.png,.webp,.svg,image/jpeg,image/png,image/webp,image/svg+xml" />
         </label>
       </div>
       <div class="item-tools">
@@ -113,16 +169,6 @@ function photoEditor(photo, index) {
   `;
 }
 
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error('Falha ao ler arquivo.'));
-    reader.readAsDataURL(file);
-  });
-}
-
-/** Preenche o formulário com dados atuais. */
 function fillForm(content) {
   document.getElementById('site-title').value = content.site.title;
   document.getElementById('site-subtitle').value = content.site.subtitle;
@@ -152,9 +198,12 @@ function fillForm(content) {
     .join('');
 }
 
-/** Coleta todos os dados do formulário e recria o objeto final. */
+function cloneContent(content) {
+  return JSON.parse(JSON.stringify(content));
+}
+
 function collectForm(baseContent) {
-  const next = structuredClone(baseContent);
+  const next = cloneContent(baseContent);
 
   next.site.title = document.getElementById('site-title').value.trim();
   next.site.subtitle = document.getElementById('site-subtitle').value.trim();
@@ -179,7 +228,7 @@ function collectForm(baseContent) {
   next.song.url = document.getElementById('song-url').value.trim();
 
   next.sections = [...document.querySelectorAll('[data-section-index]')].map((node, idx) => ({
-    ...next.sections[idx],
+    ...(next.sections[idx] ?? { id: `section-${idx + 1}`, type: 'text' }),
     title: node.querySelector('[data-field="title"]').value.trim(),
     text: node.querySelector('[data-field="text"]').value.trim(),
   }));
@@ -192,7 +241,6 @@ function collectForm(baseContent) {
   return next;
 }
 
-/** Faz download de um arquivo JSON para backup/deploy. */
 function downloadJson(content) {
   const blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json' });
   const link = document.createElement('a');
@@ -202,15 +250,50 @@ function downloadJson(content) {
   URL.revokeObjectURL(link.href);
 }
 
-/** Inicializa eventos do formulário. */
+function setMessage(text, type = 'info') {
+  const target = document.getElementById('admin-message');
+  target.textContent = text;
+  target.dataset.type = type;
+
+  window.clearTimeout(messageTimer);
+  if (type === 'success') {
+    messageTimer = window.setTimeout(() => {
+      target.textContent = '';
+      target.removeAttribute('data-type');
+    }, 4200);
+  }
+}
+
+function captionFromFilename(filename) {
+  return filename.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim() || 'Momento especial';
+}
+
+async function uploadFile(endpoint, file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return apiFetch(endpoint, {
+    method: 'POST',
+    body: formData,
+  });
+}
+
 async function initAdmin() {
-  let content = await getInitialContent();
-  fillForm(content);
+  let content;
+
+  try {
+    content = await getInitialContent();
+    fillForm(content);
+  } catch (error) {
+    setMessage(error.message || 'Não foi possível carregar o conteúdo.', 'error');
+    return;
+  }
 
   document.getElementById('sections-list').addEventListener('click', (event) => {
     const action = event.target.dataset.action;
     if (!action) return;
 
+    content = collectForm(content);
     const card = event.target.closest('[data-section-index]');
     const index = Number(card.dataset.sectionIndex);
 
@@ -229,12 +312,14 @@ async function initAdmin() {
     const action = event.target.dataset.action;
     if (!action) return;
 
+    content = collectForm(content);
     const card = event.target.closest('[data-photo-index]');
     const index = Number(card.dataset.photoIndex);
 
     if (action === 'remove-photo') {
       content.photos.splice(index, 1);
       fillForm(content);
+      setMessage('Foto removida. Clique em salvar para persistir.', 'info');
     }
   });
 
@@ -248,11 +333,17 @@ async function initAdmin() {
     if (!file) return;
 
     try {
-      const dataUrl = await readFileAsDataUrl(file);
-      content.photos[index].url = dataUrl;
+      content = collectForm(content);
+      setMessage('Enviando imagem...', 'info');
+      const upload = await uploadFile(IMAGE_UPLOAD_ENDPOINT, file);
+      content.photos[index].url = upload.url;
+      if (!content.photos[index].caption) {
+        content.photos[index].caption = captionFromFilename(file.name);
+      }
       fillForm(content);
-    } catch {
-      alert('Não foi possível carregar a imagem selecionada.');
+      setMessage('Imagem enviada. Clique em salvar para publicar.', 'success');
+    } catch (error) {
+      setMessage(error.message || 'Não foi possível enviar a imagem.', 'error');
     }
   });
 
@@ -261,30 +352,64 @@ async function initAdmin() {
     if (!file) return;
 
     try {
-      const dataUrl = await readFileAsDataUrl(file);
+      content = collectForm(content);
+      setMessage('Enviando imagem...', 'info');
+      const upload = await uploadFile(IMAGE_UPLOAD_ENDPOINT, file);
       content.photos.push({
-        url: dataUrl,
-        caption: file.name.replace(/\.[^.]+$/, ''),
+        url: upload.url,
+        caption: captionFromFilename(file.name),
       });
       fillForm(content);
       event.target.value = '';
-    } catch {
-      alert('Não foi possível carregar a imagem selecionada.');
+      setMessage('Imagem adicionada. Clique em salvar para publicar.', 'success');
+    } catch (error) {
+      setMessage(error.message || 'Não foi possível enviar a imagem.', 'error');
+    }
+  });
+
+  document.getElementById('upload-music').addEventListener('change', async (event) => {
+    const [file] = event.target.files || [];
+    if (!file) return;
+
+    try {
+      content = collectForm(content);
+      setMessage('Enviando MP3...', 'info');
+      const upload = await uploadFile(MUSIC_UPLOAD_ENDPOINT, file);
+      content.song.url = upload.url;
+      if (!content.song.title) {
+        content.song.title = captionFromFilename(file.name);
+      }
+      fillForm(content);
+      event.target.value = '';
+      setMessage('MP3 enviado. Clique em salvar para publicar.', 'success');
+    } catch (error) {
+      setMessage(error.message || 'Não foi possível enviar o MP3.', 'error');
     }
   });
 
   document.getElementById('add-photo').addEventListener('click', () => {
+    content = collectForm(content);
     content.photos.push({
-      url: '../assets/images/foto-extra.svg',
+      url: '/assets/images/foto-extra.svg',
       caption: 'Novo momento especial',
     });
     fillForm(content);
   });
 
-  document.getElementById('save-content').addEventListener('click', () => {
-    content = collectForm(content);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
-    alert('Alterações salvas! Abra a página pública para visualizar.');
+  document.getElementById('save-content').addEventListener('click', async () => {
+    try {
+      content = collectForm(content);
+      setMessage('Salvando alterações...', 'info');
+      content = normalizeContent(await apiFetch(ADMIN_CONTENT_ENDPOINT, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(content),
+      }));
+      fillForm(content);
+      setMessage('Alterações salvas e publicadas.', 'success');
+    } catch (error) {
+      setMessage(error.message || 'Não foi possível salvar.', 'error');
+    }
   });
 
   document.getElementById('download-json').addEventListener('click', () => {
@@ -292,11 +417,22 @@ async function initAdmin() {
     downloadJson(content);
   });
 
-  document.getElementById('reset-default').addEventListener('click', async () => {
-    localStorage.removeItem(STORAGE_KEY);
-    content = await getInitialContent();
-    fillForm(content);
-    alert('Conteúdo restaurado para o padrão.');
+  document.getElementById('reload-content').addEventListener('click', async () => {
+    try {
+      content = await getInitialContent();
+      fillForm(content);
+      setMessage('Conteúdo recarregado do servidor.', 'success');
+    } catch (error) {
+      setMessage(error.message || 'Não foi possível recarregar.', 'error');
+    }
+  });
+
+  document.getElementById('logout-admin').addEventListener('click', async () => {
+    try {
+      await apiFetch('/api/admin/logout', { method: 'POST' });
+    } finally {
+      window.location.assign('/pages/login.html');
+    }
   });
 }
 

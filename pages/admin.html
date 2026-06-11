@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Painel de Edição Romântico</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon-heart.svg" />
 
     <!-- Fonte compartilhada com a página pública -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -15,7 +16,7 @@
     />
 
     <!-- Estilo dedicado ao painel de edição -->
-    <link rel="stylesheet" href="../css/admin.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
   </head>
   <body>
     <main class="admin-shell">
@@ -23,12 +24,13 @@
         <h1>Painel de Edição</h1>
         <p>Edite conteúdo, tema e ordem das seções sem tocar no código.</p>
         <div class="admin-actions">
-          <a href="../index.html" class="ghost-btn">Ver página pública</a>
-          <button id="reset-default" class="danger-btn" type="button">Restaurar padrão</button>
+          <a href="/" class="ghost-btn">Ver página pública</a>
+          <button id="reload-content" class="ghost-btn" type="button">Recarregar conteúdo</button>
+          <button id="logout-admin" class="danger-btn" type="button">Sair</button>
         </div>
       </header>
 
-      <!-- Formulário principal: toda alteração pode ser salva no localStorage -->
+      <!-- Formulário principal: as alterações são salvas no backend -->
       <form id="editor-form" class="editor-grid">
         <section class="panel">
           <h2>Identidade do site</h2>
@@ -93,10 +95,10 @@
 
         <section class="panel wide">
           <h2>Fotos favoritas (pilha)</h2>
-          <p>Use caminhos locais, URLs ou envie imagens do seu dispositivo.</p>
+          <p>Use URLs HTTPS terminadas em jpg, jpeg, png, webp ou svg, ou envie imagens do seu dispositivo.</p>
           <label class="upload-inline">
             <span>Adicionar foto por upload</span>
-            <input id="upload-photo" type="file" accept="image/*" />
+            <input id="upload-photo" type="file" accept=".jpg,.jpeg,.png,.webp,.svg,image/jpeg,image/png,image/webp,image/svg+xml" />
           </label>
           <div id="photos-list" class="stack-list"></div>
           <button id="add-photo" class="ghost-btn" type="button">+ Adicionar foto</button>
@@ -119,20 +121,25 @@
             <input type="text" id="song-artist" />
           </label>
           <label>
-            Link de áudio (Spotify, MP3 ou outro link de streaming)
-            <input type="url" id="song-url" />
+            Link de áudio (Spotify ou MP3)
+            <input type="text" id="song-url" inputmode="url" />
+          </label>
+          <label class="upload-inline">
+            <span>Enviar MP3 do dispositivo</span>
+            <input id="upload-music" type="file" accept=".mp3,audio/mpeg" />
           </label>
           <p>Para Spotify, cole o link da faixa/playlist (ex: <code>https://open.spotify.com/track/...</code>).</p>
         </section>
       </form>
 
       <footer class="admin-footer">
+        <p id="admin-message" class="form-message" role="status"></p>
         <button id="save-content" class="primary-btn" type="button">Salvar alterações</button>
         <button id="download-json" class="ghost-btn" type="button">Baixar JSON</button>
       </footer>
     </main>
 
     <!-- Script do painel administrativo -->
-    <script src="../js/admin.js" type="module"></script>
+    <script src="/js/admin.js" type="module"></script>
   </body>
 </html>
