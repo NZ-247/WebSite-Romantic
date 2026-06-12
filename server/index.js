@@ -368,7 +368,10 @@ function normalizeContent(content) {
     : DEFAULT_CONTENT.sections;
 
   const photos = Array.isArray(input.photos)
-    ? input.photos.slice(0, 60).map(normalizePhoto).filter((photo) => photo.url)
+    ? input.photos
+        .slice(0, 60)
+        .map((photo, index) => normalizePhoto(photo, index))
+        .filter((photo) => photo.url)
     : DEFAULT_CONTENT.photos;
 
   return {
@@ -417,12 +420,23 @@ function normalizeSection(section, index) {
   };
 }
 
-function normalizePhoto(photo) {
+function normalizePhoto(photo, index) {
   const input = asPlainObject(photo);
+  const caption = cleanText(input.caption, '', 220);
+  const poem = cleanText(input.poem, '', 700);
+  const story = cleanText(input.story, '', 3000);
+  const date = cleanText(input.date, '', 120);
+  const layout = ['left-photo', 'right-photo'].includes(input.layout) ? input.layout : 'left-photo';
+  const idSource = cleanText(input.id, caption || poem || `memory-${index + 1}`, 120);
 
   return {
+    id: cleanSlug(idSource, `memory-${index + 1}`, index),
     url: sanitizeAssetUrl(input.url, ALLOWED_IMAGE_EXTENSIONS),
-    caption: cleanText(input.caption, 'Momento especial', 160),
+    caption,
+    poem,
+    story,
+    date,
+    layout,
   };
 }
 

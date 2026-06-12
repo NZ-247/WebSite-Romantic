@@ -12,6 +12,7 @@ const DEFAULT_NAVIGATION = {
   intervalMs: 6500,
   pauseOnHover: true,
 };
+const MEMORY_LAYOUTS = ['left-photo', 'right-photo'];
 
 let messageTimer;
 
@@ -83,7 +84,22 @@ function normalizeContent(content) {
       ...(content.song ?? {}),
     },
     sections: Array.isArray(content.sections) ? content.sections : [],
-    photos: Array.isArray(content.photos) ? content.photos : [],
+    photos: Array.isArray(content.photos) ? content.photos.map(normalizePhotoMemory) : [],
+  };
+}
+
+function normalizePhotoMemory(photo, index = 0) {
+  const caption = String(photo?.caption ?? '').trim();
+  const poem = String(photo?.poem ?? '').trim();
+
+  return {
+    id: String(photo?.id || `memory-${index + 1}`).trim(),
+    url: String(photo?.url ?? '').trim(),
+    caption,
+    poem,
+    story: String(photo?.story ?? '').trim(),
+    date: String(photo?.date ?? '').trim(),
+    layout: MEMORY_LAYOUTS.includes(photo?.layout) ? photo.layout : 'left-photo',
   };
 }
 
@@ -143,7 +159,8 @@ function sectionEditor(section, index) {
 }
 
 function photoEditor(photo, index) {
-  const previewUrl = sanitizeImageUrl(photo.url);
+  const memory = normalizePhotoMemory(photo, index);
+  const previewUrl = sanitizeImageUrl(memory.url);
   const preview = previewUrl
     ? `<img class="photo-preview" src="${escapeHtml(previewUrl)}" alt="Prévia da foto ${index + 1}" />`
     : '';
@@ -152,11 +169,29 @@ function photoEditor(photo, index) {
     <article class="item" data-photo-index="${index}">
       ${preview}
       <div class="item-row">
+        <label>ID da memória
+          <input type="text" data-field="id" value="${escapeHtml(memory.id)}" />
+        </label>
         <label>URL da foto
-          <input type="text" data-field="url" value="${escapeHtml(photo.url)}" />
+          <input type="text" data-field="url" value="${escapeHtml(memory.url)}" />
         </label>
         <label>Legenda
-          <input type="text" data-field="caption" value="${escapeHtml(photo.caption)}" />
+          <input type="text" data-field="caption" value="${escapeHtml(memory.caption)}" />
+        </label>
+        <label>Bilhete / poesia curta
+          <textarea rows="2" data-field="poem">${escapeHtml(memory.poem)}</textarea>
+        </label>
+        <label>Anotação do diário
+          <textarea rows="4" data-field="story">${escapeHtml(memory.story)}</textarea>
+        </label>
+        <label>Data do momento
+          <input type="text" data-field="date" value="${escapeHtml(memory.date)}" />
+        </label>
+        <label>Layout
+          <select data-field="layout">
+            <option value="left-photo" ${memory.layout === 'left-photo' ? 'selected' : ''}>Foto à esquerda</option>
+            <option value="right-photo" ${memory.layout === 'right-photo' ? 'selected' : ''}>Foto à direita</option>
+          </select>
         </label>
         <label>Substituir imagem por upload
           <input type="file" data-action="upload-replace" accept=".jpg,.jpeg,.png,.webp,.svg,image/jpeg,image/png,image/webp,image/svg+xml" />
@@ -233,10 +268,20 @@ function collectForm(baseContent) {
     text: node.querySelector('[data-field="text"]').value.trim(),
   }));
 
-  next.photos = [...document.querySelectorAll('[data-photo-index]')].map((node) => ({
-    url: node.querySelector('[data-field="url"]').value.trim(),
-    caption: node.querySelector('[data-field="caption"]').value.trim(),
-  }));
+  next.photos = [...document.querySelectorAll('[data-photo-index]')].map((node, index) =>
+    normalizePhotoMemory(
+      {
+        id: node.querySelector('[data-field="id"]').value.trim() || `memory-${index + 1}`,
+        url: node.querySelector('[data-field="url"]').value.trim(),
+        caption: node.querySelector('[data-field="caption"]').value.trim(),
+        poem: node.querySelector('[data-field="poem"]').value.trim(),
+        story: node.querySelector('[data-field="story"]').value.trim(),
+        date: node.querySelector('[data-field="date"]').value.trim(),
+        layout: node.querySelector('[data-field="layout"]').value,
+      },
+      index
+    )
+  );
 
   return next;
 }
@@ -356,8 +401,13 @@ async function initAdmin() {
       setMessage('Enviando imagem...', 'info');
       const upload = await uploadFile(IMAGE_UPLOAD_ENDPOINT, file);
       content.photos.push({
+        id: `memory-${content.photos.length + 1}`,
         url: upload.url,
         caption: captionFromFilename(file.name),
+        poem: '',
+        story: '',
+        date: '',
+        layout: 'left-photo',
       });
       fillForm(content);
       event.target.value = '';
@@ -390,8 +440,13 @@ async function initAdmin() {
   document.getElementById('add-photo').addEventListener('click', () => {
     content = collectForm(content);
     content.photos.push({
+      id: `memory-${content.photos.length + 1}`,
       url: '/assets/images/foto-extra.svg',
       caption: 'Novo momento especial',
+      poem: '',
+      story: '',
+      date: '',
+      layout: 'left-photo',
     });
     fillForm(content);
   });

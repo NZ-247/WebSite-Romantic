@@ -80,6 +80,54 @@ npm start
 4. Após validar, o navegador recebe um cookie de sessão `httpOnly`.
 5. Use **Sair** no painel para encerrar a sessão.
 
+## Navegação da página pública
+
+No PC:
+
+- Use o botão **Abrir coração** para abrir o envelope e mostrar a carta.
+- Na carta, use **Abrir nosso diário** para abrir a primeira página de memórias.
+- No diário, use **Anterior**, **Próxima** ou **Voltar para carta**.
+- O botão flutuante **Voltar** aparece na carta e no diário. No diário ele volta para a carta; na carta ele volta para o envelope.
+
+No celular:
+
+- Toque em **Abrir coração**, depois em **Abrir nosso diário**.
+- No diário, toque em **Anterior** ou **Próxima** para mudar de página.
+- Também é possível deslizar horizontalmente sobre a folha: arraste para a esquerda para avançar e para a direita para voltar.
+- Use **Voltar para carta** ou o botão flutuante **Voltar** para retornar uma etapa.
+
+## Atalhos de teclado
+
+- `Enter` ou `Espaço`: abre o envelope, avança da carta para o diário e, no diário, passa para a próxima página.
+- `Escape`: volta uma etapa.
+- `ArrowRight`: mostra a próxima página do diário.
+- `ArrowLeft`: mostra a página anterior do diário.
+
+## Memórias do diário
+
+No painel admin:
+
+1. Faça login em `/pages/admin.html`.
+2. Vá até **Diário de memórias**.
+3. Preencha ou edite legenda, bilhete, anotação, data e layout da memória desejada.
+4. Clique em **Salvar alterações**.
+
+Cada memória aceita o formato abaixo. `caption` continua compatível com versões antigas: se `poem` não existir, o diário usa `caption` como bilhete; se `story`, `date` ou `layout` não existirem, a página continua funcionando.
+
+```json
+{
+  "id": "memory-1",
+  "url": "/uploads/images/foto.jpg",
+  "caption": "Legenda curta",
+  "poem": "Texto curto para o post-it",
+  "story": "Texto maior contando o momento da foto",
+  "date": "22 de Maio de 2024",
+  "layout": "left-photo"
+}
+```
+
+O texto é sanitizado pelo backend e escapado na renderização pública.
+
 ## Conteúdo e endpoints
 
 - Conteúdo editável: `server/data/content.json`
