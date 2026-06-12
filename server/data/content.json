@@ -62,7 +62,7 @@
     {
       "id": "memory-3",
       "url": "assets/images/foto-3.svg",
-      "caption": "Para sempre nós dois",
+      "caption": "",
       "poem": "Se for para sonhar, que seja sempre com a sua mão na minha.",
       "story": "Essa memória tem cheiro de promessa boa. Aquele tipo de instante que a gente olha depois e percebe que queria poder visitar de novo, só para sentir tudo mais uma vez.",
       "date": "20 de Julho de 2024",
@@ -71,9 +71,9 @@
     {
       "id": "memory-4",
       "url": "/uploads/images/image-1781213326012-31267c02-5afd-450a-95a4-1e2ef3bdf8eb.jpg",
-      "caption": "Como as flores se voltam para o sol, meus pensamentos se voltam para você, pois há algo em sua presença que torna a vida mais bonita.",
+      "caption": "",
       "poem": "Você é luz pousando devagar em tudo que eu sinto.",
-      "story": "",
+      "story": "Como as flores se voltam para o sol, meus pensamentos se voltam para você, pois há algo em sua presença que torna a vida mais bonita.",
       "date": "Um dia guardado no coração",
       "layout": "right-photo"
     }

@@ -110,7 +110,19 @@ No painel admin:
 1. Faça login em `/pages/admin.html`.
 2. Vá até **Diário de memórias**.
 3. Preencha ou edite legenda, bilhete, anotação, data e layout da memória desejada.
-4. Clique em **Salvar alterações**.
+4. Se quiser reposicionar a página manualmente, use o **Editor visual da folha** dentro da própria memória.
+5. Clique em **Salvar alterações**.
+
+### Editor visual da folha
+
+Cada memória tem uma folha editável no admin. Clique em um item para selecioná-lo e arraste com o mouse para reposicionar. Foto principal e post-it também têm uma alça no canto inferior direito para redimensionar.
+
+- **Centralizar item selecionado** move o widget ativo para o centro da folha.
+- **Restaurar layout padrão** remove o layout visual personalizado daquela memória; a página pública volta a usar o layout antigo baseado em `layout`.
+- As posições são salvas em porcentagens relativas à folha: `x`, `y`, `width` e `height`.
+- No teclado, com um widget focado, use as setas para mover em passos de 1%; com `Shift`, o passo é de 5%.
+
+Widgets suportados nesta versão: foto principal, post-it/poesia, texto maior, coração, estrela, flor, fita adesiva e alfinete.
 
 Cada memória aceita o formato abaixo. `caption` continua compatível com versões antigas: se `poem` não existir, o diário usa `caption` como bilhete; se `story`, `date` ou `layout` não existirem, a página continua funcionando.
 
@@ -122,11 +134,31 @@ Cada memória aceita o formato abaixo. `caption` continua compatível com versõ
   "poem": "Texto curto para o post-it",
   "story": "Texto maior contando o momento da foto",
   "date": "22 de Maio de 2024",
-  "layout": "left-photo"
+  "layout": "left-photo",
+  "widgets": [
+    {
+      "id": "photo-main",
+      "type": "photo",
+      "x": 8,
+      "y": 18,
+      "width": 38,
+      "height": 34,
+      "rotation": -3
+    },
+    {
+      "id": "poem-note",
+      "type": "postit",
+      "x": 54,
+      "y": 20,
+      "width": 34,
+      "height": 25,
+      "rotation": 2
+    }
+  ]
 }
 ```
 
-O texto é sanitizado pelo backend e escapado na renderização pública.
+`widgets` é opcional. Se ele não existir, a página pública mantém o layout padrão atual. O texto é sanitizado pelo backend e escapado na renderização pública.
 
 ## Conteúdo e endpoints
 

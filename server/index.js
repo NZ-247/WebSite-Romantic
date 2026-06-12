@@ -29,6 +29,9 @@ const ALLOWED_IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.sv
 const ALLOWED_IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']);
 const ALLOWED_MUSIC_EXTENSIONS = new Set(['.mp3']);
 const ALLOWED_MUSIC_MIMES = new Set(['audio/mpeg', 'audio/mp3', 'audio/x-mpeg']);
+const ALLOWED_WIDGET_TYPES = new Set(['photo', 'postit', 'text', 'heart', 'star', 'flower', 'tape', 'pin']);
+const WIDGET_LIMIT = 24;
+const WIDGET_ROTATION_LIMIT = 45;
 
 const DEFAULT_CONTENT = {
   site: {
@@ -428,8 +431,9 @@ function normalizePhoto(photo, index) {
   const date = cleanText(input.date, '', 120);
   const layout = ['left-photo', 'right-photo'].includes(input.layout) ? input.layout : 'left-photo';
   const idSource = cleanText(input.id, caption || poem || `memory-${index + 1}`, 120);
+  const widgets = normalizeWidgets(input.widgets, layout);
 
-  return {
+  const normalized = {
     id: cleanSlug(idSource, `memory-${index + 1}`, index),
     url: sanitizeAssetUrl(input.url, ALLOWED_IMAGE_EXTENSIONS),
     caption,
@@ -437,6 +441,106 @@ function normalizePhoto(photo, index) {
     story,
     date,
     layout,
+  };
+
+  if (widgets.length) {
+    normalized.widgets = widgets;
+  }
+
+  return normalized;
+}
+
+function getDefaultWidgets(layout) {
+  const isRightPhoto = layout === 'right-photo';
+
+  return [
+    {
+      id: 'photo-main',
+      type: 'photo',
+      x: isRightPhoto ? 50 : 8,
+      y: 19,
+      width: 40,
+      height: 48,
+      rotation: isRightPhoto ? 2 : -2,
+    },
+    {
+      id: 'poem-note',
+      type: 'postit',
+      x: isRightPhoto ? 12 : 58,
+      y: 24,
+      width: 30,
+      height: 25,
+      rotation: isRightPhoto ? -2 : 2,
+    },
+    {
+      id: 'story-text',
+      type: 'text',
+      x: 12,
+      y: 74,
+      width: 76,
+      height: 16,
+      rotation: 0,
+    },
+    { id: 'sticker-heart', type: 'heart', x: 84, y: 82, width: 5, height: 5, rotation: 4 },
+    { id: 'sticker-star', type: 'star', x: 84, y: 16, width: 5, height: 5, rotation: 14 },
+    { id: 'sticker-flower', type: 'flower', x: 89, y: 72, width: 7, height: 7, rotation: 0 },
+    { id: 'sticker-tape', type: 'tape', x: 7, y: 49, width: 11, height: 4, rotation: -12 },
+    { id: 'sticker-pin', type: 'pin', x: 47, y: 15, width: 4, height: 6, rotation: 8 },
+  ];
+}
+
+function normalizeWidgets(widgets, layout) {
+  if (!Array.isArray(widgets)) {
+    return [];
+  }
+
+  const defaults = getDefaultWidgets(layout);
+  const defaultsById = new Map(defaults.map((widget) => [widget.id, widget]));
+  const seenIds = new Set();
+
+  return widgets
+    .slice(0, WIDGET_LIMIT)
+    .map((widget, index) => normalizeWidget(widget, index, defaults, defaultsById))
+    .filter((widget) => {
+      if (!widget || seenIds.has(widget.id)) {
+        return false;
+      }
+
+      seenIds.add(widget.id);
+      return true;
+    });
+}
+
+function normalizeWidget(widget, index, defaults, defaultsById) {
+  const input = asPlainObject(widget);
+  const id = cleanSlug(input.id, `widget-${index + 1}`, index);
+  const defaultById = defaultsById.get(id);
+  const type = ALLOWED_WIDGET_TYPES.has(input.type) ? input.type : defaultById?.type;
+
+  if (!type) {
+    return null;
+  }
+
+  const fallback = defaultById ?? defaults.find((defaultWidget) => defaultWidget.type === type) ?? {
+    id,
+    type,
+    x: 10,
+    y: 10,
+    width: 12,
+    height: 12,
+    rotation: 0,
+  };
+  const width = cleanNumber(input.width, fallback.width, 2, 100);
+  const height = cleanNumber(input.height, fallback.height, 2, 100);
+
+  return {
+    id: id || fallback.id,
+    type,
+    x: cleanNumber(input.x, fallback.x, 0, 100 - width),
+    y: cleanNumber(input.y, fallback.y, 0, 100 - height),
+    width,
+    height,
+    rotation: cleanNumber(input.rotation, fallback.rotation, -WIDGET_ROTATION_LIMIT, WIDGET_ROTATION_LIMIT),
   };
 }
 
@@ -451,6 +555,15 @@ function cleanText(value, fallback, maxLength) {
 
 function cleanColor(value, fallback) {
   return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : fallback;
+}
+
+function cleanNumber(value, fallback, min, max) {
+  const parsed = Number(value);
+  const finiteValue = Number.isFinite(parsed) ? parsed : fallback;
+  const lower = Number.isFinite(min) ? min : -Infinity;
+  const upper = Number.isFinite(max) ? Math.max(lower, max) : Infinity;
+
+  return Math.round(Math.min(Math.max(finiteValue, lower), upper) * 100) / 100;
 }
 
 function cleanSlug(value, title, index) {

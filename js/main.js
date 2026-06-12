@@ -11,6 +11,9 @@ const DEFAULT_NAVIGATION = {
   pauseOnHover: true,
 };
 const MEMORY_LAYOUTS = ['left-photo', 'right-photo'];
+const WIDGET_TYPES = ['photo', 'postit', 'text', 'heart', 'star', 'flower', 'tape', 'pin'];
+const WIDGET_LIMIT = 24;
+const WIDGET_ROTATION_LIMIT = 45;
 
 let spotifyApiPromise;
 
@@ -79,16 +82,24 @@ function normalizePhotoMemory(photo, index) {
   const poem = String(photo?.poem ?? '').trim();
   const story = String(photo?.story ?? '').trim();
   const date = String(photo?.date ?? '').trim();
+  const layout = MEMORY_LAYOUTS.includes(photo?.layout) ? photo.layout : 'left-photo';
+  const widgets = normalizeMemoryWidgets(photo?.widgets, layout);
 
-  return {
+  const normalized = {
     id: safeMemoryId(photo?.id, index),
     url: sanitizeImageUrl(photo?.url),
     caption,
     poem,
     story,
     date,
-    layout: MEMORY_LAYOUTS.includes(photo?.layout) ? photo.layout : 'left-photo',
+    layout,
   };
+
+  if (widgets.length) {
+    normalized.widgets = widgets;
+  }
+
+  return normalized;
 }
 
 function safeMemoryId(rawId, index) {
@@ -102,6 +113,122 @@ function safeMemoryId(rawId, index) {
     .slice(0, 80);
 
   return value || `memory-${index + 1}`;
+}
+
+function getDefaultWidgets(layout = 'left-photo') {
+  const isRightPhoto = layout === 'right-photo';
+
+  return [
+    {
+      id: 'photo-main',
+      type: 'photo',
+      x: isRightPhoto ? 50 : 8,
+      y: 19,
+      width: 40,
+      height: 48,
+      rotation: isRightPhoto ? 2 : -2,
+    },
+    {
+      id: 'poem-note',
+      type: 'postit',
+      x: isRightPhoto ? 12 : 58,
+      y: 24,
+      width: 30,
+      height: 25,
+      rotation: isRightPhoto ? -2 : 2,
+    },
+    {
+      id: 'story-text',
+      type: 'text',
+      x: 12,
+      y: 74,
+      width: 76,
+      height: 16,
+      rotation: 0,
+    },
+    { id: 'sticker-heart', type: 'heart', x: 84, y: 82, width: 5, height: 5, rotation: 4 },
+    { id: 'sticker-star', type: 'star', x: 84, y: 16, width: 5, height: 5, rotation: 14 },
+    { id: 'sticker-flower', type: 'flower', x: 89, y: 72, width: 7, height: 7, rotation: 0 },
+    { id: 'sticker-tape', type: 'tape', x: 7, y: 49, width: 11, height: 4, rotation: -12 },
+    { id: 'sticker-pin', type: 'pin', x: 47, y: 15, width: 4, height: 6, rotation: 8 },
+  ];
+}
+
+function normalizeMemoryWidgets(widgets, layout = 'left-photo') {
+  if (!Array.isArray(widgets)) {
+    return [];
+  }
+
+  const defaults = getDefaultWidgets(layout);
+  const defaultsById = new Map(defaults.map((widget) => [widget.id, widget]));
+  const seenIds = new Set();
+
+  return widgets
+    .slice(0, WIDGET_LIMIT)
+    .map((widget, index) => normalizeMemoryWidget(widget, index, defaults, defaultsById))
+    .filter((widget) => {
+      if (!widget || seenIds.has(widget.id)) {
+        return false;
+      }
+
+      seenIds.add(widget.id);
+      return true;
+    });
+}
+
+function normalizeMemoryWidget(widget, index, defaults, defaultsById) {
+  const input = widget && typeof widget === 'object' && !Array.isArray(widget) ? widget : {};
+  const id = safeWidgetId(input.id, index);
+  const fallbackById = defaultsById.get(id);
+  const type = WIDGET_TYPES.includes(input.type) ? input.type : fallbackById?.type;
+
+  if (!type) {
+    return null;
+  }
+
+  const fallback = fallbackById ?? defaults.find((defaultWidget) => defaultWidget.type === type) ?? {
+    id,
+    type,
+    x: 10,
+    y: 10,
+    width: 12,
+    height: 12,
+    rotation: 0,
+  };
+  const width = clampNumber(input.width, fallback.width, 2, 100);
+  const height = clampNumber(input.height, fallback.height, 2, 100);
+
+  return {
+    id: id || fallback.id,
+    type,
+    x: clampNumber(input.x, fallback.x, 0, 100 - width),
+    y: clampNumber(input.y, fallback.y, 0, 100 - height),
+    width,
+    height,
+    rotation: clampNumber(input.rotation, fallback.rotation, -WIDGET_ROTATION_LIMIT, WIDGET_ROTATION_LIMIT),
+  };
+}
+
+function safeWidgetId(rawId, index) {
+  const value = String(rawId ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+
+  return value || `widget-${index + 1}`;
+}
+
+function clampNumber(value, fallback, min, max) {
+  const parsed = Number(value);
+  const finiteValue = Number.isFinite(parsed) ? parsed : fallback;
+  const lower = Number.isFinite(min) ? min : -Infinity;
+  const upper = Number.isFinite(max) ? Math.max(lower, max) : Infinity;
+
+  return Math.round(Math.min(Math.max(finiteValue, lower), upper) * 100) / 100;
 }
 
 function escapeHtml(text) {
@@ -207,6 +334,88 @@ function renderLoadError() {
   `;
 }
 
+function memoryWidgetStyle(widget) {
+  return [
+    `left: ${widget.x}%`,
+    `top: ${widget.y}%`,
+    `width: ${widget.width}%`,
+    `height: ${widget.height}%`,
+    `--widget-rotation: ${widget.rotation}deg`,
+  ].join('; ');
+}
+
+function renderMemoryWidget(widget, photo, index, context) {
+  const style = memoryWidgetStyle(widget);
+
+  if (widget.type === 'photo') {
+    const captionMarkup = context.caption
+      ? `<figcaption class="printed-photo-caption" id="${context.photoCaptionId}">${escapeHtml(context.caption)}</figcaption>`
+      : '';
+
+    return `
+      <figure class="memory-widget memory-widget-photo" style="${style}">
+        <span class="photo-clip" aria-hidden="true"></span>
+        <span class="photo-tape photo-tape-left" aria-hidden="true"></span>
+        <span class="photo-tape photo-tape-right" aria-hidden="true"></span>
+        <img
+          src="${escapeHtml(photo.url)}"
+          alt="${escapeHtml(context.caption || context.poem || `Foto de uma memória romântica ${index + 1}`)}"
+          loading="lazy"
+        />
+        ${captionMarkup}
+      </figure>
+    `;
+  }
+
+  if (widget.type === 'postit') {
+    if (!context.poem) return '';
+
+    return `
+      <aside class="memory-widget memory-widget-postit memory-note" id="${context.noteId}" style="${style}" aria-label="Bilhete da memória ${index + 1}">
+        <span class="note-tape" aria-hidden="true"></span>
+        <p>${renderMultilineText(context.poem)}</p>
+      </aside>
+    `;
+  }
+
+  if (widget.type === 'text') {
+    if (!context.story) return '';
+
+    return `
+      <div class="memory-widget memory-widget-text diary-entry" id="${context.storyId}" style="${style}">
+        <span class="diary-entry-label">Anotação</span>
+        <p>${renderMultilineText(context.story)}</p>
+      </div>
+    `;
+  }
+
+  return `<span class="memory-widget memory-widget-${escapeHtml(widget.type)}" style="${style}" aria-hidden="true"></span>`;
+}
+
+function renderVisualMemoryPage(photo, index, context) {
+  return `
+      <article
+        class="memory-page has-visual-widgets"
+        data-photo-index="${index}"
+        data-memory-id="${escapeHtml(photo.id)}"
+        tabindex="-1"
+        aria-hidden="true"
+        aria-labelledby="${context.titleId}"
+        ${context.descriptionAttribute}
+        aria-roledescription="página do diário"
+      >
+        <span class="page-binding" aria-hidden="true"></span>
+        <header class="memory-page-header visual-page-header">
+          ${context.dateMarkup}
+          <h3 id="${context.titleId}">${escapeHtml(context.title)}</h3>
+        </header>
+        <div class="memory-visual-canvas">
+          ${photo.widgets.map((widget) => renderMemoryWidget(widget, photo, index, context)).join('')}
+        </div>
+      </article>
+    `;
+}
+
 function renderMemoryPages(photos) {
   if (!photos.length) {
     return '<p class="empty-photos">Adicione memórias no painel admin para exibir aqui.</p>';
@@ -223,7 +432,14 @@ function renderMemoryPages(photos) {
       const photoCaptionId = `memory-photo-caption-${index}`;
       const noteId = `memory-note-${index}`;
       const storyId = `memory-story-${index}`;
-      const descriptionIds = [caption ? photoCaptionId : '', poem ? noteId : '', story ? storyId : '']
+      const hasVisualWidgets = Array.isArray(photo.widgets) && photo.widgets.length > 0;
+      const visualWidgetTypes = new Set(hasVisualWidgets ? photo.widgets.map((widget) => widget.type) : []);
+      const usesWidgetType = (type) => !hasVisualWidgets || visualWidgetTypes.has(type);
+      const descriptionIds = [
+        caption && usesWidgetType('photo') ? photoCaptionId : '',
+        poem && usesWidgetType('postit') ? noteId : '',
+        story && usesWidgetType('text') ? storyId : '',
+      ]
         .filter(Boolean)
         .join(' ');
       const descriptionAttribute = descriptionIds ? ` aria-describedby="${descriptionIds}"` : '';
@@ -247,6 +463,21 @@ function renderMemoryPages(photos) {
           </div>
         `
         : '';
+
+      if (hasVisualWidgets) {
+        return renderVisualMemoryPage(photo, index, {
+          caption,
+          poem,
+          story,
+          title,
+          titleId,
+          photoCaptionId,
+          noteId,
+          storyId,
+          dateMarkup,
+          descriptionAttribute,
+        });
+      }
 
       return `
       <article
