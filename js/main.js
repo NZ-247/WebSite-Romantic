@@ -412,6 +412,42 @@ function renderMemoryWidget(widget, photo, index, context) {
   return `<span class="memory-widget memory-widget-${escapeHtml(widget.type)}" style="${style}" aria-hidden="true"></span>`;
 }
 
+function renderMobileSafeMemoryFlow(photo, index, context) {
+  const noteMarkup = context.poem
+    ? `
+      <aside class="memory-note" aria-label="Bilhete da memória ${index + 1}">
+        <span class="note-tape" aria-hidden="true"></span>
+        <p>${renderMultilineText(context.poem)}</p>
+      </aside>
+    `
+    : '';
+  const storyMarkup = context.story
+    ? `
+      <div class="diary-entry">
+        <span class="diary-entry-label">Anotação</span>
+        <p>${renderMultilineText(context.story)}</p>
+      </div>
+    `
+    : '';
+
+  return `
+    <div class="memory-mobile-flow">
+      <figure class="printed-photo">
+        <span class="photo-clip" aria-hidden="true"></span>
+        <span class="photo-tape photo-tape-left" aria-hidden="true"></span>
+        <span class="photo-tape photo-tape-right" aria-hidden="true"></span>
+        <img
+          src="${escapeHtml(photo.url)}"
+          alt="${escapeHtml(context.imageAlt)}"
+          loading="lazy"
+        />
+      </figure>
+      ${noteMarkup}
+      ${storyMarkup}
+    </div>
+  `;
+}
+
 function renderVisualMemoryPage(photo, index, context) {
   return `
       <article
@@ -432,6 +468,7 @@ function renderVisualMemoryPage(photo, index, context) {
         <div class="memory-visual-canvas">
           ${photo.widgets.map((widget) => renderMemoryWidget(widget, photo, index, context)).join('')}
         </div>
+        ${renderMobileSafeMemoryFlow(photo, index, context)}
       </article>
     `;
 }
@@ -492,7 +529,7 @@ function renderMemoryPages(photos) {
           noteId,
           storyId,
           dateMarkup,
-          descriptionAttribute,
+          descriptionAttribute: '',
         });
       }
 

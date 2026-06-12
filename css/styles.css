@@ -466,6 +466,10 @@ h1 {
   z-index: 2;
 }
 
+.memory-mobile-flow {
+  display: none;
+}
+
 .memory-widget {
   position: absolute;
   transform: rotate(var(--widget-rotation, 0deg));
@@ -587,6 +591,7 @@ h1 {
   top: 1.3rem;
   bottom: 1.3rem;
   width: 0.72rem;
+  pointer-events: none;
   background:
     radial-gradient(circle, rgba(111, 58, 75, 0.28) 0 3px, transparent 4px) 50% 0 / 100% 3.2rem repeat-y,
     linear-gradient(90deg, rgba(196, 99, 134, 0.16), rgba(255, 255, 255, 0.08));
@@ -1321,7 +1326,7 @@ h1 {
   transform: translateY(15vh) scale(0.84);
 }
 
-@media (max-width: 760px) {
+@media (max-width: 1024px) {
   .romantic-stage {
     padding: 1rem;
   }
@@ -1343,6 +1348,8 @@ h1 {
   }
 
   .photos-scene {
+    display: block;
+    text-align: center;
     padding: calc(env(safe-area-inset-top, 0px) + 4.05rem) 0.5rem 0.85rem;
   }
 
@@ -1362,18 +1369,29 @@ h1 {
   }
 
   .photo-deck {
-    width: min(97vw, 560px);
-    height: clamp(460px, calc(100svh - 21rem), 600px);
-    margin-bottom: 0.65rem;
+    width: min(97vw, 760px);
+    height: auto;
+    min-height: 0;
+    margin: 0 auto 0.65rem;
+    overflow: visible;
   }
 
   .memory-page {
-    display: grid;
+    position: relative;
+    inset: auto;
+    display: none;
     grid-template-rows: auto auto auto;
     align-content: start;
-    overflow-y: auto;
+    min-height: 0;
+    overflow: visible;
     gap: 0.55rem;
     padding: 0.9rem 0.72rem 0.8rem 1.35rem;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: none;
+    transition: none;
+    will-change: auto;
     background:
       radial-gradient(circle at 22% 14%, rgba(255, 236, 185, 0.46), transparent 0.48rem),
       radial-gradient(circle at 82% 78%, rgba(255, 192, 212, 0.34), transparent 0.45rem),
@@ -1385,6 +1403,34 @@ h1 {
         rgba(214, 228, 251, 0.62) 29px
       ),
       #fffdf8;
+  }
+
+  .memory-page.is-visible,
+  .memory-page.has-visual-widgets.is-visible {
+    display: grid;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+  }
+
+  .memory-page.has-visual-widgets {
+    display: none;
+    grid-template-rows: auto auto;
+    padding: 0.9rem 0.72rem 0.8rem 1.35rem;
+  }
+
+  .memory-page.caption-position-middle-left:not(.has-visual-widgets),
+  .memory-page.caption-position-middle-center:not(.has-visual-widgets),
+  .memory-page.caption-position-middle-right:not(.has-visual-widgets) {
+    display: none;
+    overflow: visible;
+  }
+
+  .memory-page.caption-position-middle-left.is-visible:not(.has-visual-widgets),
+  .memory-page.caption-position-middle-center.is-visible:not(.has-visual-widgets),
+  .memory-page.caption-position-middle-right.is-visible:not(.has-visual-widgets) {
+    display: grid;
   }
 
   .memory-page::before {
@@ -1408,7 +1454,9 @@ h1 {
   .memory-page-header {
     display: flex;
     flex-wrap: wrap;
-    width: min(100%, 28rem);
+    order: 1;
+    width: 100%;
+    max-width: 100%;
     gap: 0.34rem 0.5rem;
     margin-bottom: 0.62rem;
   }
@@ -1428,20 +1476,63 @@ h1 {
   }
 
   .memory-page.has-visual-widgets .visual-page-header {
-    top: 0.85rem;
-    right: 0.78rem;
-    left: 1.45rem;
-    width: auto;
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    width: min(100%, 28rem);
+    margin: 0 0 0.5rem;
     transform: none;
+    pointer-events: auto;
+  }
+
+  .memory-page.has-visual-widgets.caption-position-top-left .visual-page-header,
+  .memory-page.has-visual-widgets.caption-position-top-center .visual-page-header,
+  .memory-page.has-visual-widgets.caption-position-top-right .visual-page-header,
+  .memory-page.has-visual-widgets.caption-position-middle-left .visual-page-header,
+  .memory-page.has-visual-widgets.caption-position-middle-center .visual-page-header,
+  .memory-page.has-visual-widgets.caption-position-middle-right .visual-page-header {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    width: min(100%, 28rem);
+    margin: 0 0 0.5rem;
+    transform: none;
+    pointer-events: auto;
   }
 
   .memory-page.has-visual-widgets.caption-position-middle-left .visual-page-header,
   .memory-page.has-visual-widgets.caption-position-middle-center .visual-page-header,
   .memory-page.has-visual-widgets.caption-position-middle-right .visual-page-header {
-    top: 66%;
+    top: auto;
   }
 
-  .memory-content-grid {
+  .caption-position-middle-left .memory-page-header,
+  .caption-position-middle-center .memory-page-header,
+  .caption-position-middle-right .memory-page-header,
+  .caption-position-middle-left .memory-content-grid,
+  .caption-position-middle-center .memory-content-grid,
+  .caption-position-middle-right .memory-content-grid,
+  .caption-position-middle-left > .diary-entry,
+  .caption-position-middle-center > .diary-entry,
+  .caption-position-middle-right > .diary-entry {
+    grid-row: auto;
+  }
+
+  .memory-page.has-visual-widgets .memory-visual-canvas {
+    display: none;
+  }
+
+  .memory-mobile-flow {
+    position: relative;
+    z-index: 1;
+    display: grid;
+  }
+
+  .memory-content-grid,
+  .memory-mobile-flow {
+    order: 2;
     grid-template-columns: minmax(0, 1fr);
     align-content: start;
     gap: 0.62rem;
@@ -1456,7 +1547,12 @@ h1 {
   .printed-photo {
     width: min(100%, 420px);
     padding: 0.48rem;
-    transform: rotate(-0.8deg);
+    transform: none;
+  }
+
+  .memory-layout-right-photo .printed-photo,
+  .memory-layout-right-photo .memory-note {
+    transform: none;
   }
 
   .printed-photo img {
@@ -1479,16 +1575,20 @@ h1 {
     justify-self: center;
     padding: 0.85rem;
     font-size: clamp(1.28rem, 6vw, 1.65rem);
+    transform: none;
   }
 
   .memory-note p {
-    max-height: 6.4rem;
+    max-height: none;
+    overflow: visible;
   }
 
   .diary-entry {
+    order: 3;
     margin-top: 0.7rem;
     min-height: 94px;
-    max-height: 112px;
+    max-height: none;
+    overflow: visible;
     padding: 0.48rem 0.66rem 0.6rem 0.72rem;
   }
 
@@ -1578,8 +1678,24 @@ h1 {
   }
 
   .memory-page.has-visual-widgets .visual-page-header {
-    right: 0.7rem;
-    left: 1.2rem;
+    right: auto;
+    left: auto;
+    width: calc(100% - 0.35rem);
+    margin-inline: auto;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .memory-page.has-visual-widgets.caption-position-top-left .visual-page-header,
+  .memory-page.has-visual-widgets.caption-position-top-center .visual-page-header,
+  .memory-page.has-visual-widgets.caption-position-top-right .visual-page-header,
+  .memory-page.has-visual-widgets.caption-position-middle-left .visual-page-header,
+  .memory-page.has-visual-widgets.caption-position-middle-center .visual-page-header,
+  .memory-page.has-visual-widgets.caption-position-middle-right .visual-page-header {
+    right: auto;
+    left: auto;
+    width: calc(100% - 0.35rem);
+    margin-inline: auto;
     justify-content: center;
     text-align: center;
   }
@@ -1627,13 +1743,13 @@ h1 {
   }
 }
 
-@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+@media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
   .floating-back:hover:not(:disabled) {
     transform: none;
   }
 }
 
-@media (max-height: 820px) and (min-width: 761px) {
+@media (max-height: 820px) and (min-width: 1025px) {
   .photos-scene {
     padding-top: 0.75rem;
   }
