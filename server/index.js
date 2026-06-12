@@ -30,6 +30,15 @@ const ALLOWED_IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'i
 const ALLOWED_MUSIC_EXTENSIONS = new Set(['.mp3']);
 const ALLOWED_MUSIC_MIMES = new Set(['audio/mpeg', 'audio/mp3', 'audio/x-mpeg']);
 const ALLOWED_WIDGET_TYPES = new Set(['photo', 'postit', 'text', 'heart', 'star', 'flower', 'tape', 'pin']);
+const ALLOWED_CAPTION_POSITIONS = new Set([
+  'top-left',
+  'top-center',
+  'top-right',
+  'middle-left',
+  'middle-center',
+  'middle-right',
+]);
+const DEFAULT_CAPTION_POSITION = 'top-center';
 const WIDGET_LIMIT = 24;
 const WIDGET_ROTATION_LIMIT = 45;
 
@@ -430,6 +439,9 @@ function normalizePhoto(photo, index) {
   const story = cleanText(input.story, '', 3000);
   const date = cleanText(input.date, '', 120);
   const layout = ['left-photo', 'right-photo'].includes(input.layout) ? input.layout : 'left-photo';
+  const captionPosition = ALLOWED_CAPTION_POSITIONS.has(input.captionPosition)
+    ? input.captionPosition
+    : DEFAULT_CAPTION_POSITION;
   const idSource = cleanText(input.id, caption || poem || `memory-${index + 1}`, 120);
   const widgets = normalizeWidgets(input.widgets, layout);
 
@@ -437,6 +449,7 @@ function normalizePhoto(photo, index) {
     id: cleanSlug(idSource, `memory-${index + 1}`, index),
     url: sanitizeAssetUrl(input.url, ALLOWED_IMAGE_EXTENSIONS),
     caption,
+    captionPosition,
     poem,
     story,
     date,

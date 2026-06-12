@@ -11,6 +11,8 @@ const DEFAULT_NAVIGATION = {
   pauseOnHover: true,
 };
 const MEMORY_LAYOUTS = ['left-photo', 'right-photo'];
+const CAPTION_POSITIONS = ['top-left', 'top-center', 'top-right', 'middle-left', 'middle-center', 'middle-right'];
+const DEFAULT_CAPTION_POSITION = 'top-center';
 const WIDGET_TYPES = ['photo', 'postit', 'text', 'heart', 'star', 'flower', 'tape', 'pin'];
 const WIDGET_LIMIT = 24;
 const WIDGET_ROTATION_LIMIT = 45;
@@ -83,12 +85,14 @@ function normalizePhotoMemory(photo, index) {
   const story = String(photo?.story ?? '').trim();
   const date = String(photo?.date ?? '').trim();
   const layout = MEMORY_LAYOUTS.includes(photo?.layout) ? photo.layout : 'left-photo';
+  const captionPosition = safeCaptionPosition(photo?.captionPosition);
   const widgets = normalizeMemoryWidgets(photo?.widgets, layout);
 
   const normalized = {
     id: safeMemoryId(photo?.id, index),
     url: sanitizeImageUrl(photo?.url),
     caption,
+    captionPosition,
     poem,
     story,
     date,
@@ -113,6 +117,10 @@ function safeMemoryId(rawId, index) {
     .slice(0, 80);
 
   return value || `memory-${index + 1}`;
+}
+
+function safeCaptionPosition(value) {
+  return CAPTION_POSITIONS.includes(value) ? value : DEFAULT_CAPTION_POSITION;
 }
 
 function getDefaultWidgets(layout = 'left-photo') {
@@ -344,14 +352,27 @@ function memoryWidgetStyle(widget) {
   ].join('; ');
 }
 
+function getMemoryDisplayText(photo, index) {
+  const caption = String(photo.caption || '').trim();
+  const poem = String(photo.poem || '').trim();
+  const story = String(photo.story || '').trim();
+  const date = String(photo.date || '').trim();
+  const title = caption || date || poem || `Memória ${index + 1}`;
+  const imageAlt = caption || poem || `Foto de uma memória romântica ${index + 1}`;
+
+  return {
+    poem,
+    story,
+    date,
+    title,
+    imageAlt,
+  };
+}
+
 function renderMemoryWidget(widget, photo, index, context) {
   const style = memoryWidgetStyle(widget);
 
   if (widget.type === 'photo') {
-    const captionMarkup = context.caption
-      ? `<figcaption class="printed-photo-caption" id="${context.photoCaptionId}">${escapeHtml(context.caption)}</figcaption>`
-      : '';
-
     return `
       <figure class="memory-widget memory-widget-photo" style="${style}">
         <span class="photo-clip" aria-hidden="true"></span>
@@ -359,10 +380,9 @@ function renderMemoryWidget(widget, photo, index, context) {
         <span class="photo-tape photo-tape-right" aria-hidden="true"></span>
         <img
           src="${escapeHtml(photo.url)}"
-          alt="${escapeHtml(context.caption || context.poem || `Foto de uma memória romântica ${index + 1}`)}"
+          alt="${escapeHtml(context.imageAlt)}"
           loading="lazy"
         />
-        ${captionMarkup}
       </figure>
     `;
   }
@@ -395,7 +415,7 @@ function renderMemoryWidget(widget, photo, index, context) {
 function renderVisualMemoryPage(photo, index, context) {
   return `
       <article
-        class="memory-page has-visual-widgets"
+        class="memory-page has-visual-widgets memory-layout-${escapeHtml(photo.layout)} caption-position-${escapeHtml(photo.captionPosition)}"
         data-photo-index="${index}"
         data-memory-id="${escapeHtml(photo.id)}"
         tabindex="-1"
@@ -406,8 +426,8 @@ function renderVisualMemoryPage(photo, index, context) {
       >
         <span class="page-binding" aria-hidden="true"></span>
         <header class="memory-page-header visual-page-header">
-          ${context.dateMarkup}
           <h3 id="${context.titleId}">${escapeHtml(context.title)}</h3>
+          ${context.dateMarkup}
         </header>
         <div class="memory-visual-canvas">
           ${photo.widgets.map((widget) => renderMemoryWidget(widget, photo, index, context)).join('')}
@@ -423,30 +443,28 @@ function renderMemoryPages(photos) {
 
   return photos
     .map((photo, index) => {
-      const caption = String(photo.caption || '').trim();
-      const poem = String(photo.poem || caption).trim();
-      const story = String(photo.story || '').trim();
-      const date = String(photo.date || '').trim();
-      const title = caption || poem || `Memória ${index + 1}`;
+      const { poem, story, date, title, imageAlt } = getMemoryDisplayText(photo, index);
       const titleId = `memory-title-${index}`;
-      const photoCaptionId = `memory-photo-caption-${index}`;
       const noteId = `memory-note-${index}`;
       const storyId = `memory-story-${index}`;
       const hasVisualWidgets = Array.isArray(photo.widgets) && photo.widgets.length > 0;
       const visualWidgetTypes = new Set(hasVisualWidgets ? photo.widgets.map((widget) => widget.type) : []);
       const usesWidgetType = (type) => !hasVisualWidgets || visualWidgetTypes.has(type);
       const descriptionIds = [
-        caption && usesWidgetType('photo') ? photoCaptionId : '',
         poem && usesWidgetType('postit') ? noteId : '',
         story && usesWidgetType('text') ? storyId : '',
       ]
         .filter(Boolean)
         .join(' ');
       const descriptionAttribute = descriptionIds ? ` aria-describedby="${descriptionIds}"` : '';
-      const dateMarkup = date ? `<p class="memory-date">${escapeHtml(date)}</p>` : '';
-      const captionMarkup = caption
-        ? `<figcaption class="printed-photo-caption" id="${photoCaptionId}">${escapeHtml(caption)}</figcaption>`
-        : '';
+      const dateMarkup = date && title !== date ? `<p class="memory-date">${escapeHtml(date)}</p>` : '';
+      const isMiddleCaption = photo.captionPosition.startsWith('middle-');
+      const headerMarkup = `
+        <header class="memory-page-header">
+          <h3 id="${titleId}">${escapeHtml(title)}</h3>
+          ${dateMarkup}
+        </header>
+      `;
       const noteMarkup = poem
         ? `
           <aside class="memory-note" id="${noteId}" aria-label="Bilhete da memória ${index + 1}">
@@ -466,12 +484,11 @@ function renderMemoryPages(photos) {
 
       if (hasVisualWidgets) {
         return renderVisualMemoryPage(photo, index, {
-          caption,
           poem,
           story,
           title,
+          imageAlt,
           titleId,
-          photoCaptionId,
           noteId,
           storyId,
           dateMarkup,
@@ -481,12 +498,13 @@ function renderMemoryPages(photos) {
 
       return `
       <article
-        class="memory-page memory-layout-${escapeHtml(photo.layout)}"
+        class="memory-page memory-layout-${escapeHtml(photo.layout)} caption-position-${escapeHtml(photo.captionPosition)}"
         data-photo-index="${index}"
         data-memory-id="${escapeHtml(photo.id)}"
         tabindex="-1"
         aria-hidden="true"
         aria-labelledby="${titleId}"
+        ${descriptionAttribute}
         aria-roledescription="página do diário"
       >
         <span class="page-binding" aria-hidden="true"></span>
@@ -497,10 +515,7 @@ function renderMemoryPages(photos) {
         <span class="decor decor-flower" aria-hidden="true"></span>
         <span class="decor decor-ribbon" aria-hidden="true"></span>
 
-        <header class="memory-page-header">
-          ${dateMarkup}
-          <h3 id="${titleId}">${escapeHtml(title)}</h3>
-        </header>
+        ${isMiddleCaption ? '' : headerMarkup}
 
         <div class="memory-content-grid">
           <figure class="printed-photo">
@@ -509,15 +524,14 @@ function renderMemoryPages(photos) {
             <span class="photo-tape photo-tape-right" aria-hidden="true"></span>
             <img
               src="${escapeHtml(photo.url)}"
-              alt="${escapeHtml(caption || poem || `Foto de uma memória romântica ${index + 1}`)}"
+              alt="${escapeHtml(imageAlt)}"
               loading="lazy"
-              ${descriptionAttribute}
             />
-            ${captionMarkup}
           </figure>
           ${noteMarkup}
         </div>
 
+        ${isMiddleCaption ? headerMarkup : ''}
         ${storyMarkup}
       </article>
     `;

@@ -8,7 +8,7 @@
     "primaryColor": "#d91663",
     "secondaryColor": "#6c4cf6",
     "accentColor": "#ffb000",
-    "animationStyle": "fade"
+    "animationStyle": "slide"
   },
   "letter": {
     "title": "Uma carta para você",
@@ -45,6 +45,7 @@
       "id": "memory-1",
       "url": "assets/images/foto-1.svg",
       "caption": "Nosso sorriso favorito",
+      "captionPosition": "top-center",
       "poem": "Quando você sorri, o mundo inteiro fica mais leve.",
       "story": "Guardo esse momento como quem guarda uma flor dentro de um livro. Foi simples, bonito e cheio daquela alegria que só aparece quando estou ao seu lado.",
       "date": "22 de Maio de 2024",
@@ -54,6 +55,7 @@
       "id": "memory-2",
       "url": "assets/images/foto-2.svg",
       "caption": "Um dia inesquecível",
+      "captionPosition": "top-center",
       "poem": "Alguns dias parecem escritos especialmente para nós dois.",
       "story": "Nesse dia eu entendi, mais uma vez, que felicidade também mora nos detalhes: no jeito que a gente ri, conversa, caminha e transforma qualquer lugar em lar.",
       "date": "12 de Junho de 2024",
@@ -63,6 +65,7 @@
       "id": "memory-3",
       "url": "assets/images/foto-3.svg",
       "caption": "",
+      "captionPosition": "top-center",
       "poem": "Se for para sonhar, que seja sempre com a sua mão na minha.",
       "story": "Essa memória tem cheiro de promessa boa. Aquele tipo de instante que a gente olha depois e percebe que queria poder visitar de novo, só para sentir tudo mais uma vez.",
       "date": "20 de Julho de 2024",
@@ -72,10 +75,85 @@
       "id": "memory-4",
       "url": "/uploads/images/image-1781213326012-31267c02-5afd-450a-95a4-1e2ef3bdf8eb.jpg",
       "caption": "",
+      "captionPosition": "top-center",
       "poem": "Você é luz pousando devagar em tudo que eu sinto.",
       "story": "Como as flores se voltam para o sol, meus pensamentos se voltam para você, pois há algo em sua presença que torna a vida mais bonita.",
       "date": "Um dia guardado no coração",
-      "layout": "right-photo"
+      "layout": "right-photo",
+      "widgets": [
+        {
+          "id": "photo-main",
+          "type": "photo",
+          "x": 50.14,
+          "y": 20.4,
+          "width": 40.81,
+          "height": 52.6,
+          "rotation": 2
+        },
+        {
+          "id": "poem-note",
+          "type": "postit",
+          "x": 12,
+          "y": 24,
+          "width": 30,
+          "height": 25,
+          "rotation": -2
+        },
+        {
+          "id": "story-text",
+          "type": "text",
+          "x": 6.93,
+          "y": 80.53,
+          "width": 76,
+          "height": 16,
+          "rotation": 0
+        },
+        {
+          "id": "sticker-heart",
+          "type": "heart",
+          "x": 84,
+          "y": 82,
+          "width": 5,
+          "height": 5,
+          "rotation": 4
+        },
+        {
+          "id": "sticker-star",
+          "type": "star",
+          "x": 84,
+          "y": 16,
+          "width": 5,
+          "height": 5,
+          "rotation": 14
+        },
+        {
+          "id": "sticker-flower",
+          "type": "flower",
+          "x": 89,
+          "y": 72,
+          "width": 7,
+          "height": 7,
+          "rotation": 0
+        },
+        {
+          "id": "sticker-tape",
+          "type": "tape",
+          "x": 7,
+          "y": 49,
+          "width": 11,
+          "height": 4,
+          "rotation": -12
+        },
+        {
+          "id": "sticker-pin",
+          "type": "pin",
+          "x": 47,
+          "y": 15,
+          "width": 4,
+          "height": 6,
+          "rotation": 8
+        }
+      ]
     }
   ],
   "song": {

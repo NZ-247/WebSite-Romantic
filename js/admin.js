@@ -13,6 +13,16 @@ const DEFAULT_NAVIGATION = {
   pauseOnHover: true,
 };
 const MEMORY_LAYOUTS = ['left-photo', 'right-photo'];
+const CAPTION_POSITIONS = ['top-left', 'top-center', 'top-right', 'middle-left', 'middle-center', 'middle-right'];
+const DEFAULT_CAPTION_POSITION = 'top-center';
+const CAPTION_POSITION_LABELS = {
+  'top-left': 'Topo à esquerda',
+  'top-center': 'Topo ao centro',
+  'top-right': 'Topo à direita',
+  'middle-left': 'Meio à esquerda',
+  'middle-center': 'Meio ao centro',
+  'middle-right': 'Meio à direita',
+};
 const WIDGET_TYPES = ['photo', 'postit', 'text', 'heart', 'star', 'flower', 'tape', 'pin'];
 const RESIZABLE_WIDGET_TYPES = new Set(['photo', 'postit']);
 const WIDGET_LIMIT = 24;
@@ -107,12 +117,14 @@ function normalizePhotoMemory(photo, index = 0) {
   const caption = String(photo?.caption ?? '').trim();
   const poem = String(photo?.poem ?? '').trim();
   const layout = MEMORY_LAYOUTS.includes(photo?.layout) ? photo.layout : 'left-photo';
+  const captionPosition = safeCaptionPosition(photo?.captionPosition);
   const widgets = normalizeMemoryWidgets(photo?.widgets, layout);
 
   const normalized = {
     id: String(photo?.id || `memory-${index + 1}`).trim(),
     url: String(photo?.url ?? '').trim(),
     caption,
+    captionPosition,
     poem,
     story: String(photo?.story ?? '').trim(),
     date: String(photo?.date ?? '').trim(),
@@ -124,6 +136,10 @@ function normalizePhotoMemory(photo, index = 0) {
   }
 
   return normalized;
+}
+
+function safeCaptionPosition(value) {
+  return CAPTION_POSITIONS.includes(value) ? value : DEFAULT_CAPTION_POSITION;
 }
 
 function getDefaultWidgets(layout = 'left-photo') {
@@ -360,7 +376,6 @@ function visualWidgetContent(widget, photo, index) {
             ? `<img src="${escapeHtml(previewUrl)}" alt="Prévia da foto ${index + 1}" />`
             : '<span class="admin-widget-placeholder">Foto principal</span>'
         }
-        <span class="admin-widget-caption">${escapeHtml(photo.caption || 'Legenda da foto')}</span>
       </span>
     `;
   }
@@ -399,6 +414,13 @@ function sectionEditor(section, index) {
   `;
 }
 
+function captionPositionOptions(selectedPosition) {
+  return CAPTION_POSITIONS.map(
+    (position) =>
+      `<option value="${position}" ${selectedPosition === position ? 'selected' : ''}>${CAPTION_POSITION_LABELS[position]}</option>`
+  ).join('');
+}
+
 function photoEditor(photo, index) {
   const memory = normalizePhotoMemory(photo, index);
   const previewUrl = sanitizeImageUrl(memory.url);
@@ -418,6 +440,11 @@ function photoEditor(photo, index) {
         </label>
         <label>Legenda
           <input type="text" data-field="caption" value="${escapeHtml(memory.caption)}" />
+        </label>
+        <label>Posição do título
+          <select data-field="captionPosition">
+            ${captionPositionOptions(memory.captionPosition)}
+          </select>
         </label>
         <label>Bilhete / poesia curta
           <textarea rows="2" data-field="poem">${escapeHtml(memory.poem)}</textarea>
@@ -484,6 +511,7 @@ function readPhotoEditorFields(node, index) {
     id: node.querySelector('[data-field="id"]').value.trim() || `memory-${index + 1}`,
     url: node.querySelector('[data-field="url"]').value.trim(),
     caption: node.querySelector('[data-field="caption"]').value.trim(),
+    captionPosition: node.querySelector('[data-field="captionPosition"]').value,
     poem: node.querySelector('[data-field="poem"]').value.trim(),
     story: node.querySelector('[data-field="story"]').value.trim(),
     date: node.querySelector('[data-field="date"]').value.trim(),
@@ -762,7 +790,6 @@ function refreshVisualEditorContent(card) {
             ? `<img src="${escapeHtml(previewUrl)}" alt="Prévia da foto ${index + 1}" />`
             : '<span class="admin-widget-placeholder">Foto principal</span>'
         }
-        <span class="admin-widget-caption">${escapeHtml(photo.caption || 'Legenda da foto')}</span>
       `;
     }
   }
@@ -1046,6 +1073,7 @@ async function initAdmin() {
         id: `memory-${content.photos.length + 1}`,
         url: upload.url,
         caption: captionFromFilename(file.name),
+        captionPosition: DEFAULT_CAPTION_POSITION,
         poem: '',
         story: '',
         date: '',
@@ -1085,6 +1113,7 @@ async function initAdmin() {
       id: `memory-${content.photos.length + 1}`,
       url: '/assets/images/foto-extra.svg',
       caption: 'Novo momento especial',
+      captionPosition: DEFAULT_CAPTION_POSITION,
       poem: '',
       story: '',
       date: '',

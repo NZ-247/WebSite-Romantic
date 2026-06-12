@@ -307,7 +307,7 @@ select:focus {
 
 .admin-widget-photo {
   display: grid;
-  padding: 0.42rem 0.42rem 1.12rem;
+  padding: 0.42rem;
   background: #fff;
   box-shadow: 0 16px 28px rgba(108, 38, 68, 0.18);
 }
@@ -337,21 +337,6 @@ select:focus {
   color: #7b2647;
   font-weight: 800;
   text-align: center;
-}
-
-.admin-widget-caption {
-  position: absolute;
-  right: 0.38rem;
-  bottom: 0.28rem;
-  left: 0.38rem;
-  color: #6a2942;
-  font-size: 0.82rem;
-  font-weight: 800;
-  line-height: 1;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .admin-widget-postit {
@@ -540,10 +525,6 @@ hr {
 
   .visual-sheet {
     height: clamp(360px, 72vh, 480px);
-  }
-
-  .admin-widget-caption {
-    font-size: 0.74rem;
   }
 
   .admin-widget-postit,
